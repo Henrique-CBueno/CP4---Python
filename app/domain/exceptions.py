@@ -32,6 +32,11 @@ class DuplicatePixKeyError(DomainError):
         super().__init__(f"pix key value {value} already registered")
 
 
+class DuplicateAccountNumberError(DomainError):
+    def __init__(self, number: str) -> None:
+        super().__init__(f"account number {number} already registered")
+
+
 class InvalidCpfError(DomainError):
     def __init__(self, cpf: str) -> None:
         super().__init__(f"cpf {cpf} is not a valid cpf")

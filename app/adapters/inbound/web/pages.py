@@ -12,3 +12,15 @@ router = APIRouter()
 @router.get("/customers")
 def customers_page(request: Request):
     return templates.TemplateResponse(request, "customers.html", {})
+
+
+@router.get("/accounts")
+def accounts_page(request: Request):
+    return templates.TemplateResponse(request, "accounts.html", {})
+
+
+@router.get("/accounts/{account_id}")
+def account_detail_page(request: Request, account_id: int):
+    return templates.TemplateResponse(
+        request, "account_detail.html", {"account_id": account_id}
+    )

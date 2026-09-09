@@ -26,3 +26,31 @@ class CustomerRead(BaseModel):
     email: str
     cpf: str
     created_at: datetime
+
+
+class AccountCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    customer_id: int
+    agency: str
+    number: str
+    label: str | None = None
+
+
+class AccountUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    agency: str | None = None
+    label: str | None = None
+
+
+class AccountRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    customer_id: int
+    agency: str
+    number: str
+    label: str | None
+    balance_cents: int
+    created_at: datetime

@@ -41,6 +41,7 @@ function renderCustomers(customers) {
       <td>${customer.email}</td>
       <td>${customer.cpf}</td>
       <td>
+        <a href="/accounts?customer_id=${customer.id}">contas</a>
         <button type="button" data-action="edit" data-id="${customer.id}" data-name="${customer.name}" data-email="${customer.email}">editar</button>
         <button type="button" data-action="delete" data-id="${customer.id}">remover</button>
       </td>

@@ -10,6 +10,7 @@ _STATUS_BY_EXCEPTION: dict[type[Exception], int] = {
     exc.DuplicateEmailError: 409,
     exc.DuplicateCpfError: 409,
     exc.DuplicatePixKeyError: 409,
+    exc.DuplicateAccountNumberError: 409,
     exc.CustomerHasAccountsError: 409,
     exc.AccountHasDependenciesError: 409,
     exc.InvalidCpfError: 422,
