@@ -13,6 +13,13 @@
   box-sizing: border-box;
 }
 
+/* `.card`/`.stat-card` definem display:flex com a mesma especificidade da
+   regra padrão do navegador para [hidden] — sem isso, elementos com essas
+   classes (ex.: o formulário de criar conta) ignoram o atributo `hidden`. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
