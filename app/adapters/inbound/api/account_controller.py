@@ -106,6 +106,13 @@ def withdraw(
     return TransactionRead.model_validate(transaction)
 
 
+@router.get("/{account_id}/transactions", response_model=list[TransactionRead])
+def get_account_statement(
+    account_id: int, service: AccountService = Depends(get_account_service)
+) -> list[TransactionRead]:
+    return [TransactionRead.model_validate(t) for t in service.get_statement(account_id)]
+
+
 @router.get("/{account_id}/pix-keys", response_model=list[PixKeyRead])
 def list_account_pix_keys(
     account_id: int, service: PixKeyService = Depends(get_pix_key_service)
