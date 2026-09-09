@@ -44,6 +44,8 @@ def health() -> dict[str, str]:
 
 
 if __name__ == "__main__":
+    import os
+
     import uvicorn
 
     from alembic import command
@@ -57,8 +59,16 @@ if __name__ == "__main__":
     )
 
     # Aplica as migrações, garante que o admin inicial existe e só então sobe
-    # o servidor — tudo com um único comando (`python -m app.main`).
+    # o servidor — tudo com um único comando (`python -m app.main`). Host,
+    # porta e reload são configuráveis por env var para permitir rodar uma
+    # instância isolada (ex.: um script de demonstração/E2E) sem colidir
+    # com um servidor de desenvolvimento já em execução.
     command.upgrade(AlembicConfig(str(BASE_DIR / "alembic.ini")), "head")
     create_admin(DEFAULT_NAME, DEFAULT_EMAIL, DEFAULT_CPF, DEFAULT_PASSWORD)
 
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(
+        "app.main:app",
+        host=os.environ.get("APP_HOST", "127.0.0.1"),
+        port=int(os.environ.get("APP_PORT", "8000")),
+        reload=os.environ.get("APP_RELOAD", "true").lower() == "true",
+    )

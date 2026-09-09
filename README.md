@@ -96,6 +96,21 @@ pytest
 Os testes usam um banco SQLite temporário por teste — não afetam o `bank.db` usado pela aplicação
 em execução normal.
 
+## Demonstração ponta a ponta (Playwright)
+
+```bash
+playwright install chromium   # só na primeira vez
+python -m scripts.e2e_demo             # headless
+python -m scripts.e2e_demo --headed    # abre o navegador visível
+```
+
+Sobe uma instância isolada da aplicação (porta e banco SQLite temporários — não toca no `bank.db`
+real) e simula pela interface web uma jornada completa: admin cadastra dois clientes e abre uma
+conta para cada um, deposita numa delas, cadastra para a outra uma chave Pix `RANDOM` (valor gerado
+automaticamente), o primeiro cliente loga e deposita/saca/transfere na própria conta, confirma que
+não vê o link "Clientes" nem contas de terceiros, e o extrato reflete tudo. Screenshots de cada
+etapa ficam em `playwright-artifacts/`.
+
 ## Qualidade de código
 
 ```bash
@@ -135,6 +150,7 @@ app/
 scripts/
   init_db.py             # inicialização rápida do schema (create_all, fora da API pública)
   create_admin.py         # bootstrap do primeiro usuário admin
+  e2e_demo.py              # simulação ponta a ponta com Playwright, banco isolado
 alembic/
   versions/                # migrações versionadas
   env.py                     # aponta para Base.metadata e DATABASE_URL da aplicação
