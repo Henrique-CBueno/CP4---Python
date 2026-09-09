@@ -68,8 +68,23 @@ withdrawFormEl.addEventListener("submit", async (event) => {
   }
 });
 
+function setPixKeyValueReadOnly(readOnly) {
+  pixKeyFormEl.value.readOnly = readOnly;
+}
+
+pixKeyFormEl.type.addEventListener("change", () => {
+  if (pixKeyFormEl.type.value === "RANDOM") {
+    pixKeyFormEl.value.value = crypto.randomUUID();
+    setPixKeyValueReadOnly(true);
+  } else {
+    pixKeyFormEl.value.value = "";
+    setPixKeyValueReadOnly(false);
+  }
+});
+
 function resetPixKeyForm() {
   pixKeyFormEl.reset();
+  setPixKeyValueReadOnly(false);
   pixKeyEditingIdEl.value = "";
   pixKeySubmitButtonEl.textContent = "Cadastrar chave";
 }
@@ -119,6 +134,7 @@ pixKeyListEl.addEventListener("click", async (event) => {
   if (button.dataset.action === "edit") {
     pixKeyFormEl.type.value = button.dataset.type;
     pixKeyFormEl.value.value = button.dataset.value;
+    setPixKeyValueReadOnly(button.dataset.type === "RANDOM");
     pixKeyEditingIdEl.value = id;
     pixKeySubmitButtonEl.textContent = "Salvar";
   }
