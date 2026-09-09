@@ -111,3 +111,11 @@ class PixKeyRead(BaseModel):
     type: str
     value: str
     created_at: datetime
+
+
+class PixTransferRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_account_id: int
+    pix_key_value: str
+    amount_cents: int
