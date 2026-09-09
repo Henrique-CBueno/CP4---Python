@@ -31,9 +31,9 @@ body {
 
 body::after { position: fixed; z-index: -1; right: -12rem; bottom: -14rem; width: 32rem; height: 32rem; border-radius: 50%; content: ""; background: rgba(138, 224, 194, 0.14); filter: blur(4px); }
 
-.topbar { min-height: 78px; padding: .9rem max(1.5rem, calc((100% - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; color: white; background: rgba(10, 43, 36, .97); box-shadow: 0 4px 24px rgba(6, 42, 34, .18); }
+.topbar { position: relative; min-height: 78px; padding: .9rem max(1.5rem, calc((100% - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; color: white; background: rgba(10, 43, 36, .97); box-shadow: 0 4px 24px rgba(6, 42, 34, .18); }
 .topbar h1 { margin: 0; font-size: 1.15rem; letter-spacing: -.03em; }
-.brand { display: flex; align-items: center; gap: .65rem; color: white; text-decoration: none; }
+.brand { position: relative; display: flex; align-items: center; gap: .65rem; color: white; text-decoration: none; }
 .brand::before { width: 1.85rem; height: 1.85rem; display: grid; place-items: center; border-radius: 9px; content: "$"; color: #053b30; font-family: Georgia, serif; font-weight: 700; background: #8ee6c6; }
 .topbar nav { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; }
 .topbar nav a { padding: .52rem .72rem; border-radius: 8px; color: #d6e9e2; font-size: .88rem; font-weight: 600; text-decoration: none; transition: background .18s, color .18s; }
@@ -85,7 +85,7 @@ button + button { margin-left: .35rem; }
 body:has(#login-form) { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(420px, 1.08fr); align-items: stretch; }
 body:has(#login-form) .topbar { min-height: 100vh; padding: 3rem clamp(2rem, 7vw, 7rem); align-items: flex-start; background: linear-gradient(150deg, #073a30, #0a6553); }
 body:has(#login-form) .topbar h1 { font-family: "Fraunces", Georgia, serif; font-size: clamp(1.5rem, 2.4vw, 2rem); }
-body:has(#login-form) .brand::after { max-width: 300px; margin-top: 9rem; display: block; position: absolute; content: "Sua vida financeira, em um só lugar."; color: #bde7d8; font-family: "Fraunces", Georgia, serif; font-size: clamp(2.1rem, 4vw, 3.7rem); font-weight: 600; line-height: 1.06; letter-spacing: -.055em; }
+body:has(#login-form) .brand::after { max-width: 300px; position: absolute; top: 9rem; left: 0; display: block; content: "Sua vida financeira, em um só lugar."; color: #bde7d8; font-family: "Fraunces", Georgia, serif; font-size: clamp(2.1rem, 4vw, 3.7rem); font-weight: 600; line-height: 1.06; letter-spacing: -.055em; }
 body:has(#login-form) main { width: min(470px, calc(100% - 3rem)); align-self: center; margin: 0 auto; padding: 3rem 0; }
 body:has(#login-form) main > h2 { font-size: 2.5rem; }
 body:has(#login-form) .card { margin-top: 1.75rem; flex-direction: column; align-items: stretch; padding: 1.5rem; }
@@ -103,5 +103,5 @@ body:has(#login-form) .card button { width: 100%; margin-top: .3rem; }
   .table th, .table td { padding: .8rem; }
   body:has(#login-form) { display: block; }
   body:has(#login-form) .topbar { min-height: 245px; padding: 2rem; }
-  body:has(#login-form) .brand::after { margin-top: 5.5rem; font-size: 2.2rem; }
+  body:has(#login-form) .brand::after { top: 5.5rem; font-size: 2.2rem; }
 }
