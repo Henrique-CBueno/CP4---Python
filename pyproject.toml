@@ -1,0 +1,19 @@
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# E501 (linha longa) fica a cargo do black; aqui só sinalizaria formatação
+# que o black já resolve, gerando ruído duplicado.
+# B008 dispara em toda rota FastAPI que usa Depends(...) como valor default
+# dos parâmetros — é exatamente o padrão de injeção de dependência do
+# framework, não um bug.
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "scripts", "tests"]

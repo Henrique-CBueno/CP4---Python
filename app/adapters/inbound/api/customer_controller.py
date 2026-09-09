@@ -4,7 +4,12 @@ from sqlalchemy.orm import Session
 from app.adapters.inbound.api.account_controller import get_account_service
 from app.adapters.inbound.api.auth_dependencies import get_current_customer
 from app.adapters.inbound.api.authorization import ensure_admin, ensure_self_or_admin
-from app.adapters.inbound.api.schemas import AccountRead, CustomerCreate, CustomerRead, CustomerUpdate
+from app.adapters.inbound.api.schemas import (
+    AccountRead,
+    CustomerCreate,
+    CustomerRead,
+    CustomerUpdate,
+)
 from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
     AccountRepositorySqlAlchemy,
 )
@@ -87,4 +92,6 @@ def list_customer_accounts(
     service: AccountService = Depends(get_account_service),
 ) -> list[AccountRead]:
     ensure_self_or_admin(current, customer_id)
-    return [AccountRead.model_validate(account) for account in service.list_by_customer(customer_id)]
+    return [
+        AccountRead.model_validate(account) for account in service.list_by_customer(customer_id)
+    ]

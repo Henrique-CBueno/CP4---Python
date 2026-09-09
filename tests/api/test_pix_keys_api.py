@@ -5,7 +5,13 @@ VALID_CPF = generate_valid_cpf("529982247")
 
 def _create_account(client):
     customer = client.post(
-        "/api/customers", json={"name": "Maria Silva", "email": "maria@example.com", "cpf": VALID_CPF, "password": "Password123"}
+        "/api/customers",
+        json={
+            "name": "Maria Silva",
+            "email": "maria@example.com",
+            "cpf": VALID_CPF,
+            "password": "Password123",
+        },
     ).json()
     return client.post(
         "/api/accounts", json={"customer_id": customer["id"], "agency": "0001", "number": "123456"}
@@ -37,7 +43,8 @@ def test_create_pix_key_invalid_format_returns_422(client):
     account = _create_account(client)
 
     response = client.post(
-        "/api/pix-keys", json={"account_id": account["id"], "type": "EMAIL", "value": "not-an-email"}
+        "/api/pix-keys",
+        json={"account_id": account["id"], "type": "EMAIL", "value": "not-an-email"},
     )
     assert response.status_code == 422
 

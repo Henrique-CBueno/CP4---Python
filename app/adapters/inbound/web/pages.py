@@ -57,9 +57,7 @@ def accounts_page(request: Request, db: Session = Depends(get_db)):
 def account_detail_page(request: Request, account_id: int, db: Session = Depends(get_db)):
     if _current_customer(request, db) is None:
         return RedirectResponse("/login")
-    return templates.TemplateResponse(
-        request, "account_detail.html", {"account_id": account_id}
-    )
+    return templates.TemplateResponse(request, "account_detail.html", {"account_id": account_id})
 
 
 @router.get("/pix/transfer")

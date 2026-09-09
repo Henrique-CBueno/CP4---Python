@@ -25,13 +25,26 @@ pip install -r requirements.txt
 
 ## Inicializar o banco de dados
 
+Duas formas equivalentes de criar o schema num banco novo:
+
 ```bash
-python -m scripts.init_db
+python -m scripts.init_db        # cria as tabelas direto do metadata do SQLAlchemy
+# ou, recomendado a partir de agora (fica com histórico de versão):
+alembic upgrade head
 ```
 
-Cria o arquivo `bank.db` na raiz do projeto com as 4 tabelas (`customers`, `accounts`, `pix_keys`,
-`transactions`). Este passo é opcional: a aplicação também cria o schema automaticamente ao subir,
-se ele ainda não existir.
+`scripts.init_db` roda `Base.metadata.create_all()` — rápido, sem histórico, e é o que a própria
+aplicação usa automaticamente ao subir se o banco ainda não existir. `alembic upgrade head` aplica
+as migrações versionadas em `alembic/versions/` e é o caminho recomendado quando o schema precisar
+evoluir depois (nova coluna, novo índice etc.): gere a alteração no `app/adapters/outbound/persistence/models.py`,
+depois `alembic revision --autogenerate -m "descrição"` e revise o arquivo gerado antes de aplicar.
+
+Se você já tem um `bank.db` criado antes do Alembic existir (via `create_all`, sem a tabela
+`alembic_version`), marque-o como já estando na revisão atual em vez de recriar as tabelas:
+
+```bash
+alembic stamp head
+```
 
 ## Login e usuário admin
 
@@ -49,7 +62,9 @@ tudo, incluindo depósito em conta de qualquer cliente.
 
 > Se você já tinha um `bank.db` de antes da autenticação existir, apague-o e recrie
 > (`rm bank.db && python -m scripts.init_db`) — as novas colunas de login em `customers` são
-> `NOT NULL` e o projeto não usa migrações (Alembic).
+> `NOT NULL`. **Cuidado:** nunca apague/recrie o `bank.db` enquanto um `uvicorn` estiver rodando
+> contra ele — o processo fica com um handle para o arquivo antigo e passa a falhar com
+> "readonly database"; reinicie o servidor depois de trocar o arquivo.
 
 ## Executar a aplicação
 
@@ -69,6 +84,29 @@ pytest
 Os testes usam um banco SQLite temporário por teste — não afetam o `bank.db` usado pela aplicação
 em execução normal.
 
+## Qualidade de código
+
+```bash
+black app scripts tests          # formata
+ruff check app scripts tests     # lint (use --fix para autocorrigir o que for possível)
+```
+
+Configuração em [`pyproject.toml`](pyproject.toml) (linha de 100 colunas para os dois). O hook de
+geração de migração do Alembic já roda `black`/`ruff` automaticamente no arquivo gerado.
+
+## Migrações (Alembic)
+
+```bash
+alembic revision --autogenerate -m "descrição da alteração"   # gera uma migração a partir do diff
+alembic upgrade head                                            # aplica até a mais recente
+alembic downgrade -1                                             # desfaz a última
+```
+
+`alembic/env.py` usa a mesma `DATABASE_URL` da aplicação (`app/infrastructure/config.py`) e conhece
+todas as entidades via `app.adapters.outbound.persistence.models`. Para gerar/testar uma migração
+sem tocar no `bank.db` real, aponte para outro arquivo temporariamente:
+`ALEMBIC_DATABASE_URL="sqlite:///teste.db" alembic upgrade head`.
+
 ## Estrutura do projeto
 
 ```
@@ -83,12 +121,17 @@ app/
   templates/            # páginas Jinja2
   static/                # CSS e JavaScript
 scripts/
-  init_db.py             # inicialização do schema (fora da API pública)
+  init_db.py             # inicialização rápida do schema (create_all, fora da API pública)
+  create_admin.py         # bootstrap do primeiro usuário admin
+alembic/
+  versions/                # migrações versionadas
+  env.py                     # aponta para Base.metadata e DATABASE_URL da aplicação
 tests/
   unit/                   # domínio puro
   service/                 # services contra SQLite temporário
   api/                      # endpoints via TestClient
 docs/specs/                 # documentação de design do projeto
+pyproject.toml               # configuração do black e do ruff
 ```
 
 Veja [`docs/specs/06-architecture.md`](docs/specs/06-architecture.md) para a explicação completa da
