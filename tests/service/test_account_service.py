@@ -10,6 +10,9 @@ from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.models import Account as AccountModel
 from app.adapters.outbound.persistence.models import PixKey as PixKeyModel
 from app.adapters.outbound.persistence.models import Transaction as TransactionModel
+from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import (
+    TransactionRepositorySqlAlchemy,
+)
 from app.application.services.account_service import AccountService
 from app.application.services.customer_service import CustomerService
 from app.domain.exceptions import (
@@ -17,6 +20,8 @@ from app.domain.exceptions import (
     AccountNotFoundError,
     CustomerNotFoundError,
     DuplicateAccountNumberError,
+    InsufficientBalanceError,
+    InvalidAmountError,
 )
 from tests.helpers import generate_valid_cpf
 
@@ -35,6 +40,7 @@ def make_service(db_session) -> AccountService:
     return AccountService(
         account_repo=AccountRepositorySqlAlchemy(db_session),
         customer_repo=CustomerRepositorySqlAlchemy(db_session),
+        transaction_repo=TransactionRepositorySqlAlchemy(db_session),
     )
 
 
@@ -128,3 +134,48 @@ def test_delete_account_with_transaction_raises_error(db_session):
 
     with pytest.raises(AccountHasDependenciesError):
         service.delete(account.id)
+
+
+def test_deposit_success(db_session):
+    customer = make_customer(db_session)
+    service = make_service(db_session)
+    account = service.create(customer_id=customer.id, agency="0001", number="123456")
+
+    transaction = service.deposit(account.id, 1000)
+
+    assert transaction.type == "DEPOSIT"
+    assert transaction.source_account_id is None
+    assert transaction.destination_account_id == account.id
+    assert service.get(account.id).balance_cents == 1000
+
+
+def test_deposit_invalid_amount_raises_error(db_session):
+    customer = make_customer(db_session)
+    service = make_service(db_session)
+    account = service.create(customer_id=customer.id, agency="0001", number="123456")
+
+    with pytest.raises(InvalidAmountError):
+        service.deposit(account.id, 0)
+
+
+def test_withdraw_success(db_session):
+    customer = make_customer(db_session)
+    service = make_service(db_session)
+    account = service.create(customer_id=customer.id, agency="0001", number="123456")
+    service.deposit(account.id, 1000)
+
+    transaction = service.withdraw(account.id, 400)
+
+    assert transaction.type == "WITHDRAW"
+    assert transaction.source_account_id == account.id
+    assert transaction.destination_account_id is None
+    assert service.get(account.id).balance_cents == 600
+
+
+def test_withdraw_insufficient_balance_raises_error(db_session):
+    customer = make_customer(db_session)
+    service = make_service(db_session)
+    account = service.create(customer_id=customer.id, agency="0001", number="123456")
+
+    with pytest.raises(InsufficientBalanceError):
+        service.withdraw(account.id, 100)

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from app.adapters.outbound.persistence.models import Transaction
 from app.application.ports.account_repository import AccountRepository
 from app.application.ports.customer_repository import CustomerRepository
+from app.application.ports.transaction_repository import TransactionRepository
 from app.domain.entities.account import Account
 from app.domain.exceptions import (
     AccountHasDependenciesError,
@@ -13,10 +15,14 @@ from app.domain.exceptions import (
 
 class AccountService:
     def __init__(
-        self, account_repo: AccountRepository, customer_repo: CustomerRepository
+        self,
+        account_repo: AccountRepository,
+        customer_repo: CustomerRepository,
+        transaction_repo: TransactionRepository,
     ) -> None:
         self._account_repo = account_repo
         self._customer_repo = customer_repo
+        self._transaction_repo = transaction_repo
 
     def create(
         self, customer_id: int, agency: str, number: str, label: str | None = None
@@ -68,3 +74,25 @@ class AccountService:
         if has_dependencies:
             raise AccountHasDependenciesError(account_id)
         self._account_repo.delete(account)
+
+    def deposit(self, account_id: int, amount_cents: int) -> Transaction:
+        account = self.get(account_id)
+        account.deposit(amount_cents)
+        self._account_repo.update(account)
+        return self._transaction_repo.add(
+            source_account_id=None,
+            destination_account_id=account.id,
+            transaction_type="DEPOSIT",
+            amount_cents=amount_cents,
+        )
+
+    def withdraw(self, account_id: int, amount_cents: int) -> Transaction:
+        account = self.get(account_id)
+        account.withdraw(amount_cents)
+        self._account_repo.update(account)
+        return self._transaction_repo.add(
+            source_account_id=account.id,
+            destination_account_id=None,
+            transaction_type="WITHDRAW",
+            amount_cents=amount_cents,
+        )

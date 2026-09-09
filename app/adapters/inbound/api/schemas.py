@@ -54,3 +54,27 @@ class AccountRead(BaseModel):
     label: str | None
     balance_cents: int
     created_at: datetime
+
+
+class DepositRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    amount_cents: int
+
+
+class WithdrawRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    amount_cents: int
+
+
+class TransactionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    source_account_id: int | None
+    destination_account_id: int | None
+    type: str
+    amount_cents: int
+    description: str | None
+    created_at: datetime

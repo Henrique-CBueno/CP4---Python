@@ -83,3 +83,53 @@ def test_delete_customer_with_accounts_returns_409(client):
 
     response = client.delete(f"/api/customers/{customer['id']}")
     assert response.status_code == 409
+
+
+def test_get_account_balance(client):
+    customer = _create_customer(client)
+    account = _create_account(client, customer["id"]).json()
+
+    response = client.get(f"/api/accounts/{account['id']}/balance")
+    assert response.status_code == 200
+    assert response.json()["balance_cents"] == 0
+
+
+def test_deposit_success(client):
+    customer = _create_customer(client)
+    account = _create_account(client, customer["id"]).json()
+
+    response = client.post(f"/api/accounts/{account['id']}/deposit", json={"amount_cents": 1000})
+    assert response.status_code == 201
+    assert response.json()["type"] == "DEPOSIT"
+
+    balance = client.get(f"/api/accounts/{account['id']}/balance").json()
+    assert balance["balance_cents"] == 1000
+
+
+def test_deposit_invalid_amount_returns_400(client):
+    customer = _create_customer(client)
+    account = _create_account(client, customer["id"]).json()
+
+    response = client.post(f"/api/accounts/{account['id']}/deposit", json={"amount_cents": 0})
+    assert response.status_code == 400
+
+
+def test_withdraw_success(client):
+    customer = _create_customer(client)
+    account = _create_account(client, customer["id"]).json()
+    client.post(f"/api/accounts/{account['id']}/deposit", json={"amount_cents": 1000})
+
+    response = client.post(f"/api/accounts/{account['id']}/withdraw", json={"amount_cents": 400})
+    assert response.status_code == 201
+    assert response.json()["type"] == "WITHDRAW"
+
+    balance = client.get(f"/api/accounts/{account['id']}/balance").json()
+    assert balance["balance_cents"] == 600
+
+
+def test_withdraw_insufficient_balance_returns_400(client):
+    customer = _create_customer(client)
+    account = _create_account(client, customer["id"]).json()
+
+    response = client.post(f"/api/accounts/{account['id']}/withdraw", json={"amount_cents": 100})
+    assert response.status_code == 400

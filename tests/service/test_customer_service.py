@@ -7,6 +7,9 @@ from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
     CustomerRepositorySqlAlchemy,
 )
+from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import (
+    TransactionRepositorySqlAlchemy,
+)
 from app.application.services.account_service import AccountService
 from app.application.services.customer_service import CustomerService
 from app.domain.exceptions import (
@@ -33,6 +36,7 @@ def make_account_service(db_session) -> AccountService:
     return AccountService(
         account_repo=AccountRepositorySqlAlchemy(db_session),
         customer_repo=CustomerRepositorySqlAlchemy(db_session),
+        transaction_repo=TransactionRepositorySqlAlchemy(db_session),
     )
 
 
