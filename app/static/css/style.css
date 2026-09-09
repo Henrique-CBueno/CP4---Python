@@ -40,6 +40,17 @@ body {
   text-decoration: none;
 }
 
+.topbar #current-user {
+  color: white;
+  margin-left: 1rem;
+  font-size: 0.85rem;
+}
+
+.topbar #logout-button {
+  margin-left: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .stats {
   display: flex;
   flex-wrap: wrap;

@@ -32,7 +32,7 @@ def make_account(db_session, cpf, email, number):
         customer_repo=CustomerRepositorySqlAlchemy(db_session),
         account_repo=AccountRepositorySqlAlchemy(db_session),
     )
-    customer = customer_service.create(name="Cliente", email=email, cpf=cpf)
+    customer = customer_service.create(name="Cliente", email=email, cpf=cpf, password="Password123")
 
     account_service = AccountService(
         account_repo=AccountRepositorySqlAlchemy(db_session),

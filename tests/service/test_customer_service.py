@@ -43,7 +43,7 @@ def make_account_service(db_session) -> AccountService:
 def test_create_customer_success(db_session):
     service = make_service(db_session)
 
-    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
 
     assert customer.id is not None
     assert customer.name == "Maria Silva"
@@ -54,28 +54,28 @@ def test_create_customer_invalid_cpf(db_session):
     service = make_service(db_session)
 
     with pytest.raises(InvalidCpfError):
-        service.create(name="Maria Silva", email="maria@example.com", cpf="12345678900")
+        service.create(name="Maria Silva", email="maria@example.com", cpf="12345678900", password="Password123")
 
 
 def test_create_customer_duplicate_email(db_session):
     service = make_service(db_session)
-    service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
 
     with pytest.raises(DuplicateEmailError):
-        service.create(name="Outro Nome", email="maria@example.com", cpf=OTHER_VALID_CPF)
+        service.create(name="Outro Nome", email="maria@example.com", cpf=OTHER_VALID_CPF, password="Password123")
 
 
 def test_create_customer_duplicate_cpf(db_session):
     service = make_service(db_session)
-    service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
 
     with pytest.raises(DuplicateCpfError):
-        service.create(name="Outro Nome", email="outro@example.com", cpf=VALID_CPF)
+        service.create(name="Outro Nome", email="outro@example.com", cpf=VALID_CPF, password="Password123")
 
 
 def test_update_customer_name_and_email(db_session):
     service = make_service(db_session)
-    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
 
     updated = service.update(customer.id, name="Maria S. Silva", email="maria.s@example.com")
 
@@ -85,7 +85,7 @@ def test_update_customer_name_and_email(db_session):
 
 def test_delete_customer_without_accounts(db_session):
     service = make_service(db_session)
-    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    customer = service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
 
     service.delete(customer.id)
 
@@ -103,7 +103,7 @@ def test_get_missing_customer_raises_not_found(db_session):
 def test_delete_customer_with_accounts_raises_error(db_session):
     customer_service = make_service(db_session)
     account_service = make_account_service(db_session)
-    customer = customer_service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    customer = customer_service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123")
     account_service.create(customer_id=customer.id, agency="0001", number="123456")
 
     with pytest.raises(CustomerHasAccountsError):
