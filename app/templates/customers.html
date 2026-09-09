@@ -10,9 +10,11 @@
       <h1><a href="/" class="brand">Banco Digital Acadêmico</a></h1>
       <nav>
         <a href="/">Dashboard</a>
-        <a href="/customers">Clientes</a>
+        <a href="/customers" data-admin-only>Clientes</a>
         <a href="/accounts">Contas</a>
         <a href="/pix/transfer">Transferência Pix</a>
+        <span id="current-user"></span>
+        <button id="logout-button" type="button">Sair</button>
       </nav>
     </header>
 
@@ -25,6 +27,14 @@
         <label>Nome <input type="text" name="name" required /></label>
         <label>Email <input type="email" name="email" required /></label>
         <label>CPF <input type="text" name="cpf" required maxlength="11" /></label>
+        <label>Senha <input type="password" name="password" required minlength="6" /></label>
+        <label>
+          Papel
+          <select name="role">
+            <option value="CUSTOMER">Cliente</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </label>
         <button type="submit">Cadastrar</button>
       </form>
 
@@ -35,6 +45,7 @@
             <th>Nome</th>
             <th>Email</th>
             <th>CPF</th>
+            <th>Papel</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -43,6 +54,7 @@
     </main>
 
     <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
     <script src="/static/js/customers.js"></script>
   </body>
 </html>

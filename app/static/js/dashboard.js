@@ -7,9 +7,14 @@ function showError(message) {
 
 async function loadDashboard() {
   try {
-    const [customers, accounts] = await Promise.all([apiGet("/customers"), apiGet("/accounts")]);
+    const me = await apiGet("/auth/me");
+    const accounts = await apiGet("/accounts");
 
-    document.getElementById("customers-count").textContent = customers.length;
+    if (me.role === "ADMIN") {
+      const customers = await apiGet("/customers");
+      document.getElementById("customers-count").textContent = customers.length;
+    }
+
     document.getElementById("accounts-count").textContent = accounts.length;
 
     const totalCents = accounts.reduce((sum, account) => sum + account.balance_cents, 0);

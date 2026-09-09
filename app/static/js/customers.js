@@ -18,6 +18,9 @@ function resetForm() {
   formEl.reset();
   editingIdEl.value = "";
   formEl.cpf.disabled = false;
+  formEl.password.disabled = false;
+  formEl.password.required = true;
+  formEl.role.disabled = false;
   submitButtonEl.textContent = "Cadastrar";
 }
 
@@ -40,6 +43,7 @@ function renderCustomers(customers) {
       <td>${customer.name}</td>
       <td>${customer.email}</td>
       <td>${customer.cpf}</td>
+      <td>${customer.role === "ADMIN" ? "Admin" : "Cliente"}</td>
       <td>
         <a href="/accounts?customer_id=${customer.id}">contas</a>
         <button type="button" data-action="edit" data-id="${customer.id}" data-name="${customer.name}" data-email="${customer.email}">editar</button>
@@ -71,6 +75,10 @@ listEl.addEventListener("click", async (event) => {
     formEl.email.value = button.dataset.email;
     formEl.cpf.value = "";
     formEl.cpf.disabled = true;
+    formEl.password.value = "";
+    formEl.password.disabled = true;
+    formEl.password.required = false;
+    formEl.role.disabled = true;
     editingIdEl.value = id;
     submitButtonEl.textContent = "Salvar";
   }
@@ -93,6 +101,8 @@ formEl.addEventListener("submit", async (event) => {
         name: formEl.name.value,
         email: formEl.email.value,
         cpf: formEl.cpf.value,
+        password: formEl.password.value,
+        role: formEl.role.value,
       });
     }
     resetForm();

@@ -19,6 +19,9 @@ _STATUS_BY_EXCEPTION: dict[type[Exception], int] = {
     exc.InsufficientBalanceError: 400,
     exc.SameAccountTransferError: 400,
     exc.InvalidTransactionShapeError: 400,
+    exc.NotAuthenticatedError: 401,
+    exc.InvalidCredentialsError: 401,
+    exc.ForbiddenError: 403,
 }
 
 

@@ -8,7 +8,9 @@ from app.domain.exceptions import (
     DuplicateCpfError,
     DuplicateEmailError,
     InvalidCpfError,
+    InvalidCredentialsError,
 )
+from app.domain.password_hashing import hash_password, verify_password
 
 
 class CustomerService:
@@ -16,7 +18,9 @@ class CustomerService:
         self._customer_repo = customer_repo
         self._account_repo = account_repo
 
-    def create(self, name: str, email: str, cpf: str) -> Customer:
+    def create(
+        self, name: str, email: str, cpf: str, password: str, role: str = "CUSTOMER"
+    ) -> Customer:
         if not validators.is_valid_cpf(cpf):
             raise InvalidCpfError(cpf)
         if self._customer_repo.get_by_email(email) is not None:
@@ -24,8 +28,21 @@ class CustomerService:
         if self._customer_repo.get_by_cpf(cpf) is not None:
             raise DuplicateCpfError(cpf)
 
-        customer = Customer(id=None, name=name, email=email, cpf=cpf)
+        customer = Customer(
+            id=None,
+            name=name,
+            email=email,
+            cpf=cpf,
+            password_hash=hash_password(password),
+            role=role,
+        )
         return self._customer_repo.add(customer)
+
+    def authenticate(self, email: str, password: str) -> Customer:
+        customer = self._customer_repo.get_by_email(email)
+        if customer is None or not verify_password(password, customer.password_hash):
+            raise InvalidCredentialsError()
+        return customer
 
     def list(self) -> list[Customer]:
         return self._customer_repo.list()

@@ -4,8 +4,12 @@ VALID_CPF = generate_valid_cpf("529982247")
 OTHER_VALID_CPF = generate_valid_cpf("111444777")
 
 
-def _create_customer(client, name="Maria Silva", email="maria@example.com", cpf=VALID_CPF):
-    return client.post("/api/customers", json={"name": name, "email": email, "cpf": cpf})
+def _create_customer(
+    client, name="Maria Silva", email="maria@example.com", cpf=VALID_CPF, password="Password123"
+):
+    return client.post(
+        "/api/customers", json={"name": name, "email": email, "cpf": cpf, "password": password}
+    )
 
 
 def test_create_and_get_customer(client):
@@ -23,7 +27,8 @@ def test_list_customers(client):
 
     response = client.get("/api/customers")
     assert response.status_code == 200
-    assert len(response.json()) == 1
+    # +1 porque o fixture `client` já loga como um admin de teste.
+    assert len(response.json()) == 2
 
 
 def test_create_customer_duplicate_email_returns_409(client):

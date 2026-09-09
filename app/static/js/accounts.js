@@ -6,6 +6,7 @@ const submitButtonEl = formEl.querySelector("button[type=submit]");
 
 const params = new URLSearchParams(window.location.search);
 const filterCustomerId = params.get("customer_id");
+let isAdmin = false;
 
 function showError(message) {
   errorEl.textContent = message;
@@ -59,6 +60,10 @@ function renderAccounts(accounts) {
   listEl.innerHTML = "";
   for (const account of accounts) {
     const row = document.createElement("tr");
+    const actions = isAdmin
+      ? `<button type="button" data-action="edit" data-id="${account.id}" data-agency="${account.agency}" data-label="${account.label ?? ""}">editar</button>
+         <button type="button" data-action="delete" data-id="${account.id}">remover</button>`
+      : "";
     row.innerHTML = `
       <td><a href="/accounts/${account.id}">${account.id}</a></td>
       <td>${account.customer_id}</td>
@@ -66,10 +71,7 @@ function renderAccounts(accounts) {
       <td>${account.number}</td>
       <td>${account.label ?? ""}</td>
       <td>${formatCents(account.balance_cents)}</td>
-      <td>
-        <button type="button" data-action="edit" data-id="${account.id}" data-agency="${account.agency}" data-label="${account.label ?? ""}">editar</button>
-        <button type="button" data-action="delete" data-id="${account.id}">remover</button>
-      </td>
+      <td>${actions}</td>
     `;
     listEl.appendChild(row);
   }
@@ -132,7 +134,11 @@ formEl.addEventListener("submit", async (event) => {
 (async function init() {
   clearError();
   try {
-    await loadCustomersIntoSelect();
+    const me = await apiGet("/auth/me");
+    isAdmin = me.role === "ADMIN";
+    if (isAdmin) {
+      await loadCustomersIntoSelect();
+    }
     await loadAccounts();
   } catch (err) {
     showError(err.message);
