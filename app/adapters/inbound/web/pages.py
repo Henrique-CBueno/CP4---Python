@@ -24,3 +24,8 @@ def account_detail_page(request: Request, account_id: int):
     return templates.TemplateResponse(
         request, "account_detail.html", {"account_id": account_id}
     )
+
+
+@router.get("/pix/transfer")
+def pix_transfer_page(request: Request):
+    return templates.TemplateResponse(request, "pix_transfer.html", {})

@@ -4,6 +4,7 @@ from app.adapters.outbound.persistence.models import Transaction
 from app.application.ports.account_repository import AccountRepository
 from app.application.ports.customer_repository import CustomerRepository
 from app.application.ports.transaction_repository import TransactionRepository
+from app.domain import transaction_rules
 from app.domain.entities.account import Account
 from app.domain.exceptions import (
     AccountHasDependenciesError,
@@ -79,6 +80,7 @@ class AccountService:
         account = self.get(account_id)
         account.deposit(amount_cents)
         self._account_repo.update(account)
+        transaction_rules.validate_transaction_shape("DEPOSIT", None, account.id)
         return self._transaction_repo.add(
             source_account_id=None,
             destination_account_id=account.id,
@@ -90,6 +92,7 @@ class AccountService:
         account = self.get(account_id)
         account.withdraw(amount_cents)
         self._account_repo.update(account)
+        transaction_rules.validate_transaction_shape("WITHDRAW", account.id, None)
         return self._transaction_repo.add(
             source_account_id=account.id,
             destination_account_id=None,
