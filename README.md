@@ -69,8 +69,20 @@ tudo, incluindo depósito em conta de qualquer cliente.
 ## Executar a aplicação
 
 ```bash
+python -m app.main
+```
+
+Roda a migração do Alembic até a mais recente, garante que o admin inicial existe
+(`scripts.create_admin`, com os mesmos defaults) e só então sobe o servidor com reload — tudo em um
+único comando. Equivalente a rodar manualmente:
+
+```bash
+alembic upgrade head
+python -m scripts.create_admin
 uvicorn app.main:app --reload
 ```
+
+(a segunda forma é útil se você quiser controlar cada passo separadamente, ou já tem os dois feitos).
 
 - Interface web: http://127.0.0.1:8000/
 - Documentação interativa da API (Swagger): http://127.0.0.1:8000/docs
