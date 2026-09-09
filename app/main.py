@@ -13,7 +13,7 @@ from app.adapters.inbound.api.exception_handlers import register_exception_handl
 from app.adapters.inbound.api.pix_key_controller import router as pix_key_router
 from app.adapters.inbound.api.pix_transfer_controller import router as pix_transfer_router
 from app.adapters.inbound.web.pages import router as web_pages_router
-from app.infrastructure.config import SECRET_KEY
+from app.infrastructure.config import BASE_DIR, SECRET_KEY
 from app.infrastructure.db import init_db
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -41,3 +41,24 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    from alembic import command
+    from alembic.config import Config as AlembicConfig
+    from scripts.create_admin import (
+        DEFAULT_CPF,
+        DEFAULT_EMAIL,
+        DEFAULT_NAME,
+        DEFAULT_PASSWORD,
+        create_admin,
+    )
+
+    # Aplica as migrações, garante que o admin inicial existe e só então sobe
+    # o servidor — tudo com um único comando (`python -m app.main`).
+    command.upgrade(AlembicConfig(str(BASE_DIR / "alembic.ini")), "head")
+    create_admin(DEFAULT_NAME, DEFAULT_EMAIL, DEFAULT_CPF, DEFAULT_PASSWORD)
+
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
