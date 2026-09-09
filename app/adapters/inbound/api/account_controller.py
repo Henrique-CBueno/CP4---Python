@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.adapters.inbound.api.pix_key_controller import get_pix_key_service
 from app.adapters.inbound.api.schemas import (
     AccountCreate,
     AccountRead,
     AccountUpdate,
     DepositRequest,
+    PixKeyRead,
     TransactionRead,
     WithdrawRequest,
 )
@@ -19,6 +21,7 @@ from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import 
     TransactionRepositorySqlAlchemy,
 )
 from app.application.services.account_service import AccountService
+from app.application.services.pix_key_service import PixKeyService
 from app.infrastructure.db import get_db
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
@@ -101,3 +104,10 @@ def withdraw(
 ) -> TransactionRead:
     transaction = service.withdraw(account_id, body.amount_cents)
     return TransactionRead.model_validate(transaction)
+
+
+@router.get("/{account_id}/pix-keys", response_model=list[PixKeyRead])
+def list_account_pix_keys(
+    account_id: int, service: PixKeyService = Depends(get_pix_key_service)
+) -> list[PixKeyRead]:
+    return [PixKeyRead.model_validate(pix_key) for pix_key in service.list_by_account(account_id)]

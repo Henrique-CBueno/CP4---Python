@@ -1,6 +1,14 @@
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, EmailStr
+
+
+class PixKeyType(str, Enum):
+    CPF = "CPF"
+    EMAIL = "EMAIL"
+    PHONE = "PHONE"
+    RANDOM = "RANDOM"
 
 
 class CustomerCreate(BaseModel):
@@ -77,4 +85,29 @@ class TransactionRead(BaseModel):
     type: str
     amount_cents: int
     description: str | None
+    created_at: datetime
+
+
+class PixKeyCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    account_id: int
+    type: PixKeyType
+    value: str
+
+
+class PixKeyUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: PixKeyType | None = None
+    value: str | None = None
+
+
+class PixKeyRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    account_id: int
+    type: str
+    value: str
     created_at: datetime
