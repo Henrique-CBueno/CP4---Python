@@ -4,6 +4,7 @@ __pycache__/
 venv/
 *.db
 *.db-journal
+playwright-artifacts/
 .env
 .pytest_cache/
 .coverage
