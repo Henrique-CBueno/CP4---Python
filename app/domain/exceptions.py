@@ -73,8 +73,7 @@ class CustomerHasAccountsError(DomainError):
 class AccountHasDependenciesError(DomainError):
     def __init__(self, account_id: int) -> None:
         super().__init__(
-            f"account {account_id} has balance, pix keys or transactions "
-            "and cannot be deleted"
+            f"account {account_id} has balance, pix keys or transactions " "and cannot be deleted"
         )
 
 

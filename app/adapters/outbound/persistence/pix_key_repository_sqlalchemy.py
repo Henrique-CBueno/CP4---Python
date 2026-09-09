@@ -30,9 +30,7 @@ class PixKeyRepositorySqlAlchemy:
         return [self._to_domain(model) for model in models]
 
     def add(self, pix_key: PixKey) -> PixKey:
-        model = PixKeyModel(
-            account_id=pix_key.account_id, type=pix_key.type, value=pix_key.value
-        )
+        model = PixKeyModel(account_id=pix_key.account_id, type=pix_key.type, value=pix_key.value)
         self._session.add(model)
         self._session.flush()
         return self._to_domain(model)

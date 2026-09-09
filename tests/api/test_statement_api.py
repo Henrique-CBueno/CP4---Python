@@ -3,7 +3,8 @@ from tests.helpers import generate_valid_cpf
 
 def _create_account(client, cpf, email, number):
     customer = client.post(
-        "/api/customers", json={"name": "Cliente", "email": email, "cpf": cpf, "password": "Password123"}
+        "/api/customers",
+        json={"name": "Cliente", "email": email, "cpf": cpf, "password": "Password123"},
     ).json()
     return client.post(
         "/api/accounts", json={"customer_id": customer["id"], "agency": "0001", "number": number}
@@ -11,7 +12,9 @@ def _create_account(client, cpf, email, number):
 
 
 def test_statement_lists_deposit_and_withdraw(client):
-    account = _create_account(client, generate_valid_cpf("529982247"), "maria@example.com", "111111")
+    account = _create_account(
+        client, generate_valid_cpf("529982247"), "maria@example.com", "111111"
+    )
     client.post(f"/api/accounts/{account['id']}/deposit", json={"amount_cents": 1000})
     client.post(f"/api/accounts/{account['id']}/withdraw", json={"amount_cents": 300})
 

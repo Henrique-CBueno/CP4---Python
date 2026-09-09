@@ -32,7 +32,10 @@ def is_valid_pix_key(key_type: str, value: str) -> bool:
 
 
 def _cpf_check_digit(digits: str, weight_start: int) -> str:
-    total = sum(int(digit) * weight for digit, weight in zip(digits, range(weight_start, 1, -1)))
+    total = sum(
+        int(digit) * weight
+        for digit, weight in zip(digits, range(weight_start, 1, -1), strict=False)
+    )
     remainder = (total * 10) % 11
     return "0" if remainder == 10 else str(remainder)
 

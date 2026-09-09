@@ -3,7 +3,8 @@ from tests.helpers import generate_valid_cpf
 
 def _create_account(client, cpf, email, number):
     customer = client.post(
-        "/api/customers", json={"name": "Cliente", "email": email, "cpf": cpf, "password": "Password123"}
+        "/api/customers",
+        json={"name": "Cliente", "email": email, "cpf": cpf, "password": "Password123"},
     ).json()
     return client.post(
         "/api/accounts", json={"customer_id": customer["id"], "agency": "0001", "number": number}
@@ -11,7 +12,9 @@ def _create_account(client, cpf, email, number):
 
 
 def test_transfer_success(client):
-    source = _create_account(client, generate_valid_cpf("529982247"), "source@example.com", "111111")
+    source = _create_account(
+        client, generate_valid_cpf("529982247"), "source@example.com", "111111"
+    )
     destination = _create_account(
         client, generate_valid_cpf("111444777"), "destination@example.com", "222222"
     )
@@ -39,7 +42,9 @@ def test_transfer_success(client):
 
 
 def test_transfer_pix_key_not_found_returns_404(client):
-    source = _create_account(client, generate_valid_cpf("529982247"), "source@example.com", "111111")
+    source = _create_account(
+        client, generate_valid_cpf("529982247"), "source@example.com", "111111"
+    )
     client.post(f"/api/accounts/{source['id']}/deposit", json={"amount_cents": 1000})
 
     response = client.post(
@@ -54,7 +59,9 @@ def test_transfer_pix_key_not_found_returns_404(client):
 
 
 def test_transfer_insufficient_balance_returns_400(client):
-    source = _create_account(client, generate_valid_cpf("529982247"), "source@example.com", "111111")
+    source = _create_account(
+        client, generate_valid_cpf("529982247"), "source@example.com", "111111"
+    )
     destination = _create_account(
         client, generate_valid_cpf("111444777"), "destination@example.com", "222222"
     )
@@ -75,7 +82,9 @@ def test_transfer_insufficient_balance_returns_400(client):
 
 
 def test_transfer_to_same_account_returns_400(client):
-    source = _create_account(client, generate_valid_cpf("529982247"), "source@example.com", "111111")
+    source = _create_account(
+        client, generate_valid_cpf("529982247"), "source@example.com", "111111"
+    )
     client.post(
         "/api/pix-keys",
         json={"account_id": source["id"], "type": "EMAIL", "value": "source@example.com"},
@@ -94,7 +103,9 @@ def test_transfer_to_same_account_returns_400(client):
 
 
 def test_transfer_invalid_amount_returns_400(client):
-    source = _create_account(client, generate_valid_cpf("529982247"), "source@example.com", "111111")
+    source = _create_account(
+        client, generate_valid_cpf("529982247"), "source@example.com", "111111"
+    )
 
     response = client.post(
         "/api/pix/transfers",

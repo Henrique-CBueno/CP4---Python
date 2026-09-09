@@ -56,10 +56,7 @@ def list_accounts(
     current: Customer = Depends(get_current_customer),
     service: AccountService = Depends(get_account_service),
 ) -> list[AccountRead]:
-    if current.role == "ADMIN":
-        accounts = service.list()
-    else:
-        accounts = service.list_by_customer(current.id)
+    accounts = service.list() if current.role == "ADMIN" else service.list_by_customer(current.id)
     return [AccountRead.model_validate(account) for account in accounts]
 
 
