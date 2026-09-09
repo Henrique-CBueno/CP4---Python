@@ -88,6 +88,10 @@ class AccountService:
             amount_cents=amount_cents,
         )
 
+    def get_statement(self, account_id: int) -> list[Transaction]:
+        self.get(account_id)
+        return self._transaction_repo.list_by_account(account_id)
+
     def withdraw(self, account_id: int, amount_cents: int) -> Transaction:
         account = self.get(account_id)
         account.withdraw(amount_cents)

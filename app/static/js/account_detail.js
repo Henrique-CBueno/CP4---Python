@@ -7,6 +7,7 @@ const pixKeyFormEl = document.getElementById("pix-key-form");
 const pixKeyListEl = document.getElementById("pix-keys-list");
 const pixKeyEditingIdEl = document.getElementById("pix-key-editing-id");
 const pixKeySubmitButtonEl = pixKeyFormEl.querySelector("button[type=submit]");
+const statementListEl = document.getElementById("statement-list");
 
 function showError(message) {
   errorEl.textContent = message;
@@ -46,6 +47,7 @@ depositFormEl.addEventListener("submit", async (event) => {
     await apiPost(`/accounts/${accountId}/deposit`, { amount_cents: amountCents });
     depositFormEl.reset();
     await loadAccount();
+    await loadStatement();
   } catch (err) {
     showError(err.message);
   }
@@ -60,6 +62,7 @@ withdrawFormEl.addEventListener("submit", async (event) => {
     await apiPost(`/accounts/${accountId}/withdraw`, { amount_cents: amountCents });
     withdrawFormEl.reset();
     await loadAccount();
+    await loadStatement();
   } catch (err) {
     showError(err.message);
   }
@@ -147,5 +150,31 @@ pixKeyFormEl.addEventListener("submit", async (event) => {
   }
 });
 
+async function loadStatement() {
+  try {
+    const transactions = await apiGet(`/accounts/${accountId}/transactions`);
+    renderStatement(transactions);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function renderStatement(transactions) {
+  statementListEl.innerHTML = "";
+  for (const transaction of transactions) {
+    const isCredit = String(transaction.destination_account_id) === String(accountId);
+    const direction = isCredit ? "Entrada" : "Saída";
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${new Date(transaction.created_at).toLocaleString("pt-BR")}</td>
+      <td>${transaction.type}</td>
+      <td>${direction}</td>
+      <td>${formatCents(transaction.amount_cents)}</td>
+    `;
+    statementListEl.appendChild(row);
+  }
+}
+
 loadAccount();
 loadPixKeys();
+loadStatement();
