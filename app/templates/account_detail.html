@@ -19,6 +19,22 @@
       <div id="account-detail-error" class="alert alert-error" hidden></div>
 
       <section class="card" id="account-info"></section>
+
+      <section>
+        <h3>Depósito</h3>
+        <form id="deposit-form" class="card">
+          <label>Valor (R$) <input type="number" name="amount" step="0.01" min="0.01" required /></label>
+          <button type="submit">Depositar</button>
+        </form>
+      </section>
+
+      <section>
+        <h3>Saque</h3>
+        <form id="withdraw-form" class="card">
+          <label>Valor (R$) <input type="number" name="amount" step="0.01" min="0.01" required /></label>
+          <button type="submit">Sacar</button>
+        </form>
+      </section>
     </main>
 
     <script src="/static/js/api.js"></script>
