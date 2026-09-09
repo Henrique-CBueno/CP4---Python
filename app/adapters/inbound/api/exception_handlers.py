@@ -14,6 +14,7 @@ _STATUS_BY_EXCEPTION: dict[type[Exception], int] = {
     exc.CustomerHasAccountsError: 409,
     exc.AccountHasDependenciesError: 409,
     exc.InvalidCpfError: 422,
+    exc.InvalidPixKeyError: 422,
     exc.InvalidAmountError: 400,
     exc.InsufficientBalanceError: 400,
     exc.SameAccountTransferError: 400,

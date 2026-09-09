@@ -42,6 +42,11 @@ class InvalidCpfError(DomainError):
         super().__init__(f"cpf {cpf} is not a valid cpf")
 
 
+class InvalidPixKeyError(DomainError):
+    def __init__(self, key_type: str, value: str) -> None:
+        super().__init__(f"value {value} is not a valid {key_type} pix key")
+
+
 class InvalidAmountError(DomainError):
     def __init__(self, amount_cents: int) -> None:
         super().__init__(f"amount_cents must be greater than zero, got {amount_cents}")
