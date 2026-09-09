@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Contas — Banco Digital Acadêmico</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1><a href="/" class="brand">Banco Digital Acadêmico</a></h1>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/customers">Clientes</a>
+        <a href="/accounts">Contas</a>
+        <a href="/pix/transfer">Transferência Pix</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>Contas</h2>
+      <div id="accounts-error" class="alert alert-error" hidden></div>
+
+      <form id="account-form" class="card">
+        <input type="hidden" id="account-editing-id" value="" />
+        <label>
+          Cliente
+          <select name="customer_id" required></select>
+        </label>
+        <label>Agência <input type="text" name="agency" required /></label>
+        <label>Número <input type="text" name="number" required /></label>
+        <label>Apelido <input type="text" name="label" /></label>
+        <button type="submit">Cadastrar</button>
+      </form>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Agência</th>
+            <th>Número</th>
+            <th>Apelido</th>
+            <th>Saldo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="accounts-list"></tbody>
+      </table>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/accounts.js"></script>
+  </body>
+</html>

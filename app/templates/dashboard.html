@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Dashboard — Banco Digital Acadêmico</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1><a href="/" class="brand">Banco Digital Acadêmico</a></h1>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/customers">Clientes</a>
+        <a href="/accounts">Contas</a>
+        <a href="/pix/transfer">Transferência Pix</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>Dashboard</h2>
+      <div id="dashboard-error" class="alert alert-error" hidden></div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <span class="stat-value" id="customers-count">-</span>
+          <span class="stat-label">Clientes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="accounts-count">-</span>
+          <span class="stat-label">Contas</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="total-balance">-</span>
+          <span class="stat-label">Saldo total</span>
+        </div>
+      </div>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+  </body>
+</html>

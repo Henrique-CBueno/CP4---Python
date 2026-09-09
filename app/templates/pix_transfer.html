@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Transferência Pix — Banco Digital Acadêmico</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1><a href="/" class="brand">Banco Digital Acadêmico</a></h1>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/customers">Clientes</a>
+        <a href="/accounts">Contas</a>
+        <a href="/pix/transfer">Transferência Pix</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>Transferência Pix</h2>
+      <div id="pix-transfer-error" class="alert alert-error" hidden></div>
+      <div id="pix-transfer-success" class="alert alert-success" hidden></div>
+
+      <form id="pix-transfer-form" class="card">
+        <label>
+          Conta de origem
+          <select name="source_account_id" required></select>
+        </label>
+        <label>Chave Pix de destino <input type="text" name="pix_key_value" required /></label>
+        <label>
+          Valor (R$) <input type="number" name="amount" step="0.01" min="0.01" required />
+        </label>
+        <button type="submit">Transferir</button>
+      </form>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/pix_transfer.js"></script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Detalhe da Conta — Banco Digital Acadêmico</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body data-account-id="{{ account_id }}">
+    <header class="topbar">
+      <h1><a href="/" class="brand">Banco Digital Acadêmico</a></h1>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/customers">Clientes</a>
+        <a href="/accounts">Contas</a>
+        <a href="/pix/transfer">Transferência Pix</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>Conta #{{ account_id }}</h2>
+      <div id="account-detail-error" class="alert alert-error" hidden></div>
+
+      <section class="card" id="account-info"></section>
+
+      <section>
+        <h3>Depósito</h3>
+        <form id="deposit-form" class="card">
+          <label>Valor (R$) <input type="number" name="amount" step="0.01" min="0.01" required /></label>
+          <button type="submit">Depositar</button>
+        </form>
+      </section>
+
+      <section>
+        <h3>Saque</h3>
+        <form id="withdraw-form" class="card">
+          <label>Valor (R$) <input type="number" name="amount" step="0.01" min="0.01" required /></label>
+          <button type="submit">Sacar</button>
+        </form>
+      </section>
+
+      <section>
+        <h3>Chaves Pix</h3>
+        <form id="pix-key-form" class="card">
+          <input type="hidden" id="pix-key-editing-id" value="" />
+          <label>
+            Tipo
+            <select name="type" required>
+              <option value="CPF">CPF</option>
+              <option value="EMAIL">EMAIL</option>
+              <option value="PHONE">PHONE</option>
+              <option value="RANDOM">RANDOM</option>
+            </select>
+          </label>
+          <label>Valor <input type="text" name="value" required /></label>
+          <button type="submit">Cadastrar chave</button>
+        </form>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="pix-keys-list"></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h3>Extrato</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Direção</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody id="statement-list"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/account_detail.js"></script>
+  </body>
+</html>
