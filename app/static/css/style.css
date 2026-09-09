@@ -88,8 +88,8 @@ body:has(#login-form) .topbar h1 { font-family: "Fraunces", Georgia, serif; font
 body:has(#login-form) .brand::after { max-width: 300px; position: absolute; top: 9rem; left: 0; display: block; content: "Sua vida financeira, em um só lugar."; color: #bde7d8; font-family: "Fraunces", Georgia, serif; font-size: clamp(2.1rem, 4vw, 3.7rem); font-weight: 600; line-height: 1.06; letter-spacing: -.055em; }
 body:has(#login-form) main { width: min(470px, calc(100% - 3rem)); align-self: center; margin: 0 auto; padding: 3rem 0; }
 body:has(#login-form) main > h2 { font-size: 2.5rem; }
-body:has(#login-form) .card { margin-top: 1.75rem; flex-direction: column; align-items: stretch; padding: 1.5rem; }
-body:has(#login-form) .card label { width: 100%; }
+body:has(#login-form) .card { margin-top: 1.75rem; flex-direction: column; align-items: stretch; gap: 1.1rem; padding: 1.5rem; }
+body:has(#login-form) .card label { width: 100%; flex: none; }
 body:has(#login-form) .card button { width: 100%; margin-top: .3rem; }
 
 @media (max-width: 760px) {
