@@ -9,6 +9,11 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 router = APIRouter()
 
 
+@router.get("/")
+def dashboard_page(request: Request):
+    return templates.TemplateResponse(request, "dashboard.html", {})
+
+
 @router.get("/customers")
 def customers_page(request: Request):
     return templates.TemplateResponse(request, "customers.html", {})
