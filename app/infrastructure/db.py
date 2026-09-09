@@ -23,6 +23,7 @@ class Base(DeclarativeBase):
 def get_db() -> Iterator[Session]:
     with SessionLocal() as session:
         yield session
+        session.commit()
 
 
 def init_db() -> None:

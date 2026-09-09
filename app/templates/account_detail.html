@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Detalhe da Conta — Banco Digital Acadêmico</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body data-account-id="{{ account_id }}">
+    <header class="topbar">
+      <h1>Banco Digital Acadêmico</h1>
+      <nav>
+        <a href="/customers">Clientes</a>
+        <a href="/accounts">Contas</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>Conta #{{ account_id }}</h2>
+      <div id="account-detail-error" class="alert alert-error" hidden></div>
+
+      <section class="card" id="account-info"></section>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/account_detail.js"></script>
+  </body>
+</html>

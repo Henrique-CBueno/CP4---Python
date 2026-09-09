@@ -1,7 +1,9 @@
+from app.application.ports.account_repository import AccountRepository
 from app.application.ports.customer_repository import CustomerRepository
 from app.domain import validators
 from app.domain.entities.customer import Customer
 from app.domain.exceptions import (
+    CustomerHasAccountsError,
     CustomerNotFoundError,
     DuplicateCpfError,
     DuplicateEmailError,
@@ -10,8 +12,9 @@ from app.domain.exceptions import (
 
 
 class CustomerService:
-    def __init__(self, customer_repo: CustomerRepository) -> None:
+    def __init__(self, customer_repo: CustomerRepository, account_repo: AccountRepository) -> None:
         self._customer_repo = customer_repo
+        self._account_repo = account_repo
 
     def create(self, name: str, email: str, cpf: str) -> Customer:
         if not validators.is_valid_cpf(cpf):
@@ -48,7 +51,7 @@ class CustomerService:
         return self._customer_repo.update(customer)
 
     def delete(self, customer_id: int) -> None:
-        # A checagem de contas associadas (CustomerHasAccountsError) é adicionada
-        # quando o AccountRepository é introduzido no backend de contas.
         customer = self.get(customer_id)
+        if self._account_repo.list_by_customer(customer_id):
+            raise CustomerHasAccountsError(customer_id)
         self._customer_repo.delete(customer)

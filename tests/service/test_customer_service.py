@@ -1,11 +1,16 @@
 import pytest
 
 from app.adapters.outbound.persistence import models  # noqa: F401
+from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
+    AccountRepositorySqlAlchemy,
+)
 from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
     CustomerRepositorySqlAlchemy,
 )
+from app.application.services.account_service import AccountService
 from app.application.services.customer_service import CustomerService
 from app.domain.exceptions import (
+    CustomerHasAccountsError,
     CustomerNotFoundError,
     DuplicateCpfError,
     DuplicateEmailError,
@@ -18,7 +23,17 @@ OTHER_VALID_CPF = generate_valid_cpf("111444777")
 
 
 def make_service(db_session) -> CustomerService:
-    return CustomerService(customer_repo=CustomerRepositorySqlAlchemy(db_session))
+    return CustomerService(
+        customer_repo=CustomerRepositorySqlAlchemy(db_session),
+        account_repo=AccountRepositorySqlAlchemy(db_session),
+    )
+
+
+def make_account_service(db_session) -> AccountService:
+    return AccountService(
+        account_repo=AccountRepositorySqlAlchemy(db_session),
+        customer_repo=CustomerRepositorySqlAlchemy(db_session),
+    )
 
 
 def test_create_customer_success(db_session):
@@ -79,3 +94,13 @@ def test_get_missing_customer_raises_not_found(db_session):
 
     with pytest.raises(CustomerNotFoundError):
         service.get(999)
+
+
+def test_delete_customer_with_accounts_raises_error(db_session):
+    customer_service = make_service(db_session)
+    account_service = make_account_service(db_session)
+    customer = customer_service.create(name="Maria Silva", email="maria@example.com", cpf=VALID_CPF)
+    account_service.create(customer_id=customer.id, agency="0001", number="123456")
+
+    with pytest.raises(CustomerHasAccountsError):
+        customer_service.delete(customer.id)
