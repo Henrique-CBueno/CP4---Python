@@ -11,12 +11,19 @@ class PixKeyType(str, Enum):
     RANDOM = "RANDOM"
 
 
+class CustomerRole(str, Enum):
+    ADMIN = "ADMIN"
+    CUSTOMER = "CUSTOMER"
+
+
 class CustomerCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
     email: EmailStr
     cpf: str
+    password: str
+    role: CustomerRole = CustomerRole.CUSTOMER
 
 
 class CustomerUpdate(BaseModel):
@@ -33,7 +40,24 @@ class CustomerRead(BaseModel):
     name: str
     email: str
     cpf: str
+    role: str
     created_at: datetime
+
+
+class LoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+    password: str
+
+
+class CurrentUserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    email: str
+    role: str
 
 
 class AccountCreate(BaseModel):

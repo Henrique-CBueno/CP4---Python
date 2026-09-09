@@ -5,7 +5,7 @@ VALID_CPF = generate_valid_cpf("529982247")
 
 def _create_account(client):
     customer = client.post(
-        "/api/customers", json={"name": "Maria Silva", "email": "maria@example.com", "cpf": VALID_CPF}
+        "/api/customers", json={"name": "Maria Silva", "email": "maria@example.com", "cpf": VALID_CPF, "password": "Password123"}
     ).json()
     return client.post(
         "/api/accounts", json={"customer_id": customer["id"], "agency": "0001", "number": "123456"}

@@ -3,7 +3,7 @@ from tests.helpers import generate_valid_cpf
 
 def _create_account(client, cpf, email, number):
     customer = client.post(
-        "/api/customers", json={"name": "Cliente", "email": email, "cpf": cpf}
+        "/api/customers", json={"name": "Cliente", "email": email, "cpf": cpf, "password": "Password123"}
     ).json()
     return client.post(
         "/api/accounts", json={"customer_id": customer["id"], "agency": "0001", "number": number}

@@ -33,6 +33,24 @@ Cria o arquivo `bank.db` na raiz do projeto com as 4 tabelas (`customers`, `acco
 `transactions`). Este passo é opcional: a aplicação também cria o schema automaticamente ao subir,
 se ele ainda não existir.
 
+## Login e usuário admin
+
+A aplicação exige login (sessão via cookie). Como criar clientes é uma operação restrita a admin,
+é preciso criar o primeiro admin diretamente (sem passar pela API):
+
+```bash
+python -m scripts.create_admin
+```
+
+Cria o admin `admin@example.com` / senha `admin123` (personalizável com `--name`, `--email`, `--cpf`
+e `--password`). Faça login em `/login` com essas credenciais para cadastrar clientes (com senha) e
+abrir contas para eles. Um cliente logado só vê e opera as próprias contas; o admin vê e opera
+tudo, incluindo depósito em conta de qualquer cliente.
+
+> Se você já tinha um `bank.db` de antes da autenticação existir, apague-o e recrie
+> (`rm bank.db && python -m scripts.init_db`) — as novas colunas de login em `customers` são
+> `NOT NULL` e o projeto não usa migrações (Alembic).
+
 ## Executar a aplicação
 
 ```bash

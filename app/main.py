@@ -4,13 +4,16 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.adapters.inbound.api.account_controller import router as account_router
+from app.adapters.inbound.api.auth_controller import router as auth_router
 from app.adapters.inbound.api.customer_controller import router as customer_router
 from app.adapters.inbound.api.exception_handlers import register_exception_handlers
 from app.adapters.inbound.api.pix_key_controller import router as pix_key_router
 from app.adapters.inbound.api.pix_transfer_controller import router as pix_transfer_router
 from app.adapters.inbound.web.pages import router as web_pages_router
+from app.infrastructure.config import SECRET_KEY
 from app.infrastructure.db import init_db
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -24,7 +27,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Banco Digital Acadêmico", lifespan=lifespan)
 
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 register_exception_handlers(app)
+app.include_router(auth_router)
 app.include_router(customer_router)
 app.include_router(account_router)
 app.include_router(pix_key_router)

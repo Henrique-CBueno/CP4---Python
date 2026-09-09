@@ -8,4 +8,6 @@ class Customer:
     name: str
     email: str
     cpf: str
+    password_hash: str
+    role: str = "CUSTOMER"
     created_at: datetime | None = None

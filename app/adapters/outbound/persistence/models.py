@@ -12,11 +12,16 @@ def _now() -> datetime:
 
 class Customer(Base):
     __tablename__ = "customers"
+    __table_args__ = (
+        CheckConstraint("role IN ('ADMIN','CUSTOMER')", name="ck_customers_role"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     cpf: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[str] = mapped_column(String, nullable=False, default="CUSTOMER")
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 

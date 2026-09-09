@@ -26,7 +26,13 @@ class CustomerRepositorySqlAlchemy:
         return self._to_domain(model) if model else None
 
     def add(self, customer: Customer) -> Customer:
-        model = CustomerModel(name=customer.name, email=customer.email, cpf=customer.cpf)
+        model = CustomerModel(
+            name=customer.name,
+            email=customer.email,
+            cpf=customer.cpf,
+            password_hash=customer.password_hash,
+            role=customer.role,
+        )
         self._session.add(model)
         self._session.flush()
         return self._to_domain(model)
@@ -50,5 +56,7 @@ class CustomerRepositorySqlAlchemy:
             name=model.name,
             email=model.email,
             cpf=model.cpf,
+            password_hash=model.password_hash,
+            role=model.role,
             created_at=model.created_at,
         )

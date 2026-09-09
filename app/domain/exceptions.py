@@ -81,3 +81,18 @@ class AccountHasDependenciesError(DomainError):
 class InvalidTransactionShapeError(DomainError):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class NotAuthenticatedError(DomainError):
+    def __init__(self) -> None:
+        super().__init__("authentication required")
+
+
+class InvalidCredentialsError(DomainError):
+    def __init__(self) -> None:
+        super().__init__("invalid email or password")
+
+
+class ForbiddenError(DomainError):
+    def __init__(self, message: str = "not allowed to perform this action") -> None:
+        super().__init__(message)
