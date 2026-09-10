@@ -202,29 +202,12 @@ Um projeto acadêmico deste porte ganha mais em clareza do que em pureza arquite
 simplificações estão documentadas deliberadamente desde o design original
 (`docs/specs/06-architecture.md`) e se confirmam no código:
 
-### 1. `Transaction` não tem entidade de domínio própria
+### 1. `Transaction` é entidade de domínio
 
-`Customer`, `Account` e `PixKey` são `dataclass` puras em `app/domain/entities/`. `Transaction` só
-existe como modelo SQLAlchemy, em `app/adapters/outbound/persistence/models.py`, complementada por
-uma função pura de validação, `validate_transaction_shape()`, em
-`app/domain/transaction_rules.py`. Como `Transaction` é um registro de ledger *create-only* (nunca
-muda de estado depois de criada), criar uma entidade de domínio inteira só para ela geraria código
-de mapeamento ORM ⇄ domínio sem ganho didático proporcional.
-
-Essa concessão tem uma consequência direta e verificável no código: a porta
-`app/application/ports/transaction_repository.py` e os Services `AccountService` e
-`PixTransferService` importam `Transaction` diretamente de
-`app.adapters.outbound.persistence.models` — ou seja, a camada de aplicação (Service e até o Port)
-depende, para este único conceito, da camada de persistência. Isso é uma inversão real da direção de
-dependência pretendida, mas é uma inversão pequena, isolada a um único tipo, e explicada por um
-comentário no próprio código-fonte (`transaction_repository.py`, linhas 5–7):
-
-```python
-# Transaction não tem entidade de domínio própria (ver 06-architecture.md,
-# "hexagonal simplificada, não purista") — o port referencia diretamente o
-# modelo de persistência.
-from app.adapters.outbound.persistence.models import Transaction
-```
+`Customer`, `Account`, `PixKey` e `Transaction` são `dataclass` puras em
+`app/domain/entities/`. A porta `TransactionRepository` e os services dependem de
+`app.domain.entities.transaction.Transaction`; o adapter SQLAlchemy converte entre a entidade e o
+modelo ORM. Assim, a camada de aplicação não depende de `adapters/outbound`.
 
 ### 2. Checagens de autorização leem o repositório diretamente, antes do Service
 

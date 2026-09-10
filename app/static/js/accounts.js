@@ -1,8 +1,9 @@
 const listEl = document.getElementById("accounts-list");
 const formEl = document.getElementById("account-form");
 const errorEl = document.getElementById("accounts-error");
-const editingIdEl = document.getElementById("account-editing-id");
-const submitButtonEl = formEl.querySelector("button[type=submit]");
+const editModalEl = document.getElementById("account-edit-modal");
+const editFormEl = document.getElementById("account-edit-form");
+const editIdEl = editFormEl.elements.id;
 
 const params = new URLSearchParams(window.location.search);
 const filterCustomerId = params.get("customer_id");
@@ -20,13 +21,14 @@ function clearError() {
 
 function resetForm() {
   formEl.reset();
-  editingIdEl.value = "";
-  formEl.customer_id.disabled = false;
-  formEl.number.disabled = false;
-  submitButtonEl.textContent = "Cadastrar";
   if (filterCustomerId) {
     formEl.customer_id.value = filterCustomerId;
   }
+}
+
+function closeEditModal() {
+  editModalEl.close();
+  editFormEl.reset();
 }
 
 async function loadCustomersIntoSelect() {
@@ -94,13 +96,10 @@ listEl.addEventListener("click", async (event) => {
   }
 
   if (button.dataset.action === "edit") {
-    formEl.customer_id.disabled = true;
-    formEl.number.disabled = true;
-    formEl.agency.value = button.dataset.agency;
-    formEl.label.value = button.dataset.label;
-    formEl.number.value = "";
-    editingIdEl.value = id;
-    submitButtonEl.textContent = "Salvar";
+    editIdEl.value = id;
+    editFormEl.agency.value = button.dataset.agency;
+    editFormEl.label.value = button.dataset.label;
+    editModalEl.showModal();
   }
 });
 
@@ -108,26 +107,38 @@ formEl.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearError();
 
-  const editingId = editingIdEl.value;
-
   try {
-    if (editingId) {
-      await apiPut(`/accounts/${editingId}`, {
-        agency: formEl.agency.value,
-        label: formEl.label.value || null,
-      });
-    } else {
-      await apiPost("/accounts", {
-        customer_id: Number(formEl.customer_id.value),
-        agency: formEl.agency.value,
-        number: formEl.number.value,
-        label: formEl.label.value || null,
-      });
-    }
+    await apiPost("/accounts", {
+      customer_id: Number(formEl.customer_id.value),
+      agency: formEl.agency.value,
+      number: formEl.number.value,
+      label: formEl.label.value || null,
+    });
     resetForm();
     await loadAccounts();
   } catch (err) {
     showError(err.message);
+  }
+});
+
+editFormEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearError();
+  try {
+    await apiPut(`/accounts/${editIdEl.value}`, {
+      agency: editFormEl.agency.value,
+      label: editFormEl.label.value || null,
+    });
+    closeEditModal();
+    await loadAccounts();
+  } catch (err) {
+    showError(err.message);
+  }
+});
+
+editModalEl.addEventListener("click", (event) => {
+  if (event.target === editModalEl || event.target.closest("[data-modal-cancel], .modal-close")) {
+    closeEditModal();
   }
 });
 

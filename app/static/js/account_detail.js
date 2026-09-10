@@ -5,8 +5,9 @@ const depositFormEl = document.getElementById("deposit-form");
 const withdrawFormEl = document.getElementById("withdraw-form");
 const pixKeyFormEl = document.getElementById("pix-key-form");
 const pixKeyListEl = document.getElementById("pix-keys-list");
-const pixKeyEditingIdEl = document.getElementById("pix-key-editing-id");
-const pixKeySubmitButtonEl = pixKeyFormEl.querySelector("button[type=submit]");
+const pixKeyEditModalEl = document.getElementById("pix-key-edit-modal");
+const pixKeyEditFormEl = document.getElementById("pix-key-edit-form");
+const pixKeyEditIdEl = pixKeyEditFormEl.elements.id;
 const statementListEl = document.getElementById("statement-list");
 
 function showError(message) {
@@ -68,25 +69,29 @@ withdrawFormEl.addEventListener("submit", async (event) => {
   }
 });
 
-function setPixKeyValueReadOnly(readOnly) {
-  pixKeyFormEl.value.readOnly = readOnly;
+function setPixKeyValueReadOnly(form, readOnly) {
+  form.value.readOnly = readOnly;
 }
 
 pixKeyFormEl.type.addEventListener("change", () => {
   if (pixKeyFormEl.type.value === "RANDOM") {
     pixKeyFormEl.value.value = crypto.randomUUID();
-    setPixKeyValueReadOnly(true);
+    setPixKeyValueReadOnly(pixKeyFormEl, true);
   } else {
     pixKeyFormEl.value.value = "";
-    setPixKeyValueReadOnly(false);
+    setPixKeyValueReadOnly(pixKeyFormEl, false);
   }
 });
 
 function resetPixKeyForm() {
   pixKeyFormEl.reset();
-  setPixKeyValueReadOnly(false);
-  pixKeyEditingIdEl.value = "";
-  pixKeySubmitButtonEl.textContent = "Cadastrar chave";
+  setPixKeyValueReadOnly(pixKeyFormEl, false);
+}
+
+function closePixKeyEditModal() {
+  pixKeyEditModalEl.close();
+  pixKeyEditFormEl.reset();
+  setPixKeyValueReadOnly(pixKeyEditFormEl, false);
 }
 
 async function loadPixKeys() {
@@ -132,11 +137,11 @@ pixKeyListEl.addEventListener("click", async (event) => {
   }
 
   if (button.dataset.action === "edit") {
-    pixKeyFormEl.type.value = button.dataset.type;
-    pixKeyFormEl.value.value = button.dataset.value;
-    setPixKeyValueReadOnly(button.dataset.type === "RANDOM");
-    pixKeyEditingIdEl.value = id;
-    pixKeySubmitButtonEl.textContent = "Salvar";
+    pixKeyEditIdEl.value = id;
+    pixKeyEditFormEl.type.value = button.dataset.type;
+    pixKeyEditFormEl.value.value = button.dataset.value;
+    setPixKeyValueReadOnly(pixKeyEditFormEl, button.dataset.type === "RANDOM");
+    pixKeyEditModalEl.showModal();
   }
 });
 
@@ -144,25 +149,46 @@ pixKeyFormEl.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearError();
 
-  const editingId = pixKeyEditingIdEl.value;
-
   try {
-    if (editingId) {
-      await apiPut(`/pix-keys/${editingId}`, {
-        type: pixKeyFormEl.type.value,
-        value: pixKeyFormEl.value.value,
-      });
-    } else {
-      await apiPost("/pix-keys", {
-        account_id: Number(accountId),
-        type: pixKeyFormEl.type.value,
-        value: pixKeyFormEl.value.value,
-      });
-    }
+    await apiPost("/pix-keys", {
+      account_id: Number(accountId),
+      type: pixKeyFormEl.type.value,
+      value: pixKeyFormEl.value.value,
+    });
     resetPixKeyForm();
     await loadPixKeys();
   } catch (err) {
     showError(err.message);
+  }
+});
+
+pixKeyEditFormEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearError();
+  try {
+    await apiPut(`/pix-keys/${pixKeyEditIdEl.value}`, {
+      type: pixKeyEditFormEl.type.value,
+      value: pixKeyEditFormEl.value.value,
+    });
+    closePixKeyEditModal();
+    await loadPixKeys();
+  } catch (err) {
+    showError(err.message);
+  }
+});
+
+pixKeyEditFormEl.type.addEventListener("change", () => {
+  const isRandom = pixKeyEditFormEl.type.value === "RANDOM";
+  if (isRandom) pixKeyEditFormEl.value.value = crypto.randomUUID();
+  setPixKeyValueReadOnly(pixKeyEditFormEl, isRandom);
+});
+
+pixKeyEditModalEl.addEventListener("click", (event) => {
+  if (
+    event.target === pixKeyEditModalEl ||
+    event.target.closest("[data-modal-cancel], .modal-close")
+  ) {
+    closePixKeyEditModal();
   }
 });
 

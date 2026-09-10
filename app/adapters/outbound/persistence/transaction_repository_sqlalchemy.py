@@ -3,7 +3,8 @@ from __future__ import annotations
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.adapters.outbound.persistence.models import Transaction
+from app.adapters.outbound.persistence.models import Transaction as TransactionModel
+from app.domain.entities.transaction import Transaction
 
 
 class TransactionRepositorySqlAlchemy:
@@ -18,7 +19,7 @@ class TransactionRepositorySqlAlchemy:
         amount_cents: int,
         description: str | None = None,
     ) -> Transaction:
-        model = Transaction(
+        model = TransactionModel(
             source_account_id=source_account_id,
             destination_account_id=destination_account_id,
             type=transaction_type,
@@ -27,17 +28,29 @@ class TransactionRepositorySqlAlchemy:
         )
         self._session.add(model)
         self._session.flush()
-        return model
+        return self._to_domain(model)
 
     def list_by_account(self, account_id: int) -> list[Transaction]:
         stmt = (
-            select(Transaction)
+            select(TransactionModel)
             .where(
                 or_(
-                    Transaction.source_account_id == account_id,
-                    Transaction.destination_account_id == account_id,
+                    TransactionModel.source_account_id == account_id,
+                    TransactionModel.destination_account_id == account_id,
                 )
             )
-            .order_by(Transaction.created_at.desc())
+            .order_by(TransactionModel.created_at.desc())
         )
-        return list(self._session.scalars(stmt).all())
+        return [self._to_domain(model) for model in self._session.scalars(stmt).all()]
+
+    @staticmethod
+    def _to_domain(model: TransactionModel) -> Transaction:
+        return Transaction(
+            id=model.id,
+            source_account_id=model.source_account_id,
+            destination_account_id=model.destination_account_id,
+            type=model.type,
+            amount_cents=model.amount_cents,
+            description=model.description,
+            created_at=model.created_at,
+        )

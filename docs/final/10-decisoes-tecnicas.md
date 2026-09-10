@@ -161,25 +161,49 @@ projeto, as alternativas consideradas, a opção escolhida, o motivo e o trade-o
 - **Trade-off:** a função `get_*_service()` é reescrita (com pequenas variações) em cada arquivo de
   controller — uma repetição pequena e aceitável dado o número de Services (4).
 
-## D12 — Sem CQRS, Event Sourcing ou microserviços
+## D12 — Sem CQRS ou microserviços
 
 - **Alternativas consideradas:** nenhuma foi implementada; citadas aqui só para deixar explícito que
   foram avaliadas e descartadas, não esquecidas.
-- **Escolha:** um único modelo de leitura e escrita por entidade (sem `Command`/`Query` separados),
-  um único banco relacional como fonte de verdade (sem *event store*), um único processo (sem
-  serviços distribuídos).
-- **Motivo:** CQRS e Event Sourcing resolvem problemas de escala, auditoria avançada e modelos de
-  leitura divergentes do modelo de escrita — nenhum existe neste projeto (4 entidades, poucas
-  centenas de linhas de regra de negócio). Microserviços resolveriam um problema de deploy e escala
-  independente entre módulos — também inexistente aqui, onde todo o sistema roda em um único
-  processo `uvicorn` contra um único arquivo SQLite.
+- **Escolha:** um único modelo de leitura e escrita por entidade (sem `Command`/`Query` separados
+  nem modelo de leitura materializado à parte), um único processo (sem serviços distribuídos).
+- **Motivo:** CQRS resolve o problema de um modelo de leitura que diverge estruturalmente do modelo
+  de escrita, geralmente com um *read model* persistido separadamente — este projeto lê o saldo
+  calculando-o sob demanda (ver D13), sem precisar de um modelo de leitura materializado à parte.
+  Microserviços resolveriam um problema de deploy e escala independente entre módulos — inexistente
+  aqui, onde todo o sistema roda em um único processo `uvicorn` contra um único arquivo SQLite.
 - **Trade-off:** nenhum, para este escopo — essas técnicas adicionariam complexidade sem nenhum
   problema real para resolver, o oposto do que o enunciado pede ("sem introduzir infraestrutura
   desnecessária").
+
+## D13 — Event sourcing para o saldo de conta
+
+- **Alternativas consideradas:** manter `balance_cents` como coluna mutável em `accounts`,
+  atualizada via `UPDATE` a cada depósito/saque/transferência (abordagem original do projeto — ainda
+  descrita, sem essa evolução, em `docs/specs/`).
+- **Escolha:** remover a coluna `balance_cents` de `accounts`; `transactions` passa a ser a única
+  fonte de verdade sobre movimentações financeiras, e o saldo é sempre recalculado somando os
+  eventos daquela conta (`AccountRepositorySqlAlchemy._compute_balance()`). Depositar, sacar e
+  transferir passam a ser só um `INSERT` em `transactions` — nunca mais um `UPDATE` em `accounts`.
+  Ver `04-modelo-de-dominio.md` e `05-banco-de-dados.md` para o detalhamento, e
+  `07-fluxos-principais.md` para os diagramas de sequência atualizados.
+- **Motivo:** `transactions` já era, na prática, um log completo de todo evento financeiro da conta
+  — manter `balance_cents` como coluna era guardar o mesmo fato duas vezes (estado e histórico), com
+  risco real de os dois divergirem se algum caminho de código esquecesse de atualizar um dos dois.
+  Derivar o saldo elimina essa redundância: não existe estado para ficar inconsistente com o
+  histórico, porque o "estado" é sempre calculado a partir dele.
+- **Trade-off:** cada leitura de saldo passa a exigir somar todo o histórico de transações da conta
+  (duas queries `SUM`), em vez de ler um único campo — mais caro por leitura, mas sem custo real no
+  volume de um projeto acadêmico. Não é event sourcing "completo" no sentido de arquitetura de
+  produção: não há *event store* dedicado, *snapshotting* incremental, nem projeção
+  materializada/cache — se o volume de transações por conta crescesse muito, seria o próximo passo
+  natural (ver D12, que documenta por que isso não foi necessário aqui).
 
 ## Resumo
 
 Cada decisão acima resolve um requisito real do projeto (ou o requisito explícito do enunciado, ou
 uma necessidade didática concreta, como distinguir "minha conta" de "conta de outro cliente"). Onde
 uma técnica mais sofisticada foi deliberadamente deixada de fora (D9 sem JWT, D10 sem Pix real, D12
-sem CQRS/Event Sourcing/microserviços), a ausência é uma escolha registrada, não uma lacuna.
+sem CQRS/microserviços), a ausência é uma escolha registrada, não uma lacuna — e onde uma técnica
+mais sofisticada *foi* adotada de forma proposital e escopada (D13, event sourcing só para o saldo),
+isso também está registrado, com o trade-off explícito em vez de omitido.

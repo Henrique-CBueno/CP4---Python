@@ -109,19 +109,22 @@ class BrokenTransactionRepo:
 O teste deposita 1000 centavos na conta de origem e **confirma esse estado inicial**
 (`db_session.commit()`) — simulando uma requisição anterior já concluída com sucesso. Em seguida,
 monta um `PixTransferService` com o `BrokenTransactionRepo` no lugar do repositório real de
-`Transaction` e chama `transfer()`. O débito e o crédito acontecem normalmente em memória e são
-enviados ao banco via `flush()` — mas a criação da `Transaction` levanta `RuntimeError` antes de
-qualquer commit. O teste então chama `db_session.rollback()` explicitamente, simulando exatamente o
-que `get_db()` faz sozinho quando uma exceção escapa de uma requisição real (ver
-`03-arquitetura.md`), e confirma:
+`Transaction` e chama `transfer()`. Como o saldo agora é derivado de `transactions` (event
+sourcing — ver `05-banco-de-dados.md`), nenhuma conta é mutada antes desse ponto: `transfer()` só
+valida (`balance_rules.validate_withdraw`) e então tenta `transaction_repo.add()`, que levanta
+`RuntimeError` antes de qualquer escrita. O `db_session.rollback()` explícito, simulando o que
+`get_db()` faz sozinho quando uma exceção escapa de uma requisição real (ver `03-arquitetura.md`),
+não tem nada para desfazer — e é exatamente isso que o teste comprova:
 
 ```python
-assert account_repo.get_by_id(source.id).balance_cents == 1000  # não foi debitado
-assert account_repo.get_by_id(destination.id).balance_cents == 0  # não foi creditado
+assert account_repo.get_by_id(source.id).balance_cents == 1000  # nada foi debitado
+assert account_repo.get_by_id(destination.id).balance_cents == 0  # nada foi creditado
 ```
 
-Ou seja: o teste não verifica só que uma exceção foi levantada — verifica que o **estado do banco**,
-depois do rollback, é idêntico ao estado antes da tentativa de transferência.
+Ou seja: o teste não verifica só que uma exceção foi levantada — verifica que o **saldo calculado**,
+depois do rollback, é idêntico ao estado antes da tentativa de transferência. Com event sourcing
+isso é quase trivial (nada é escrito antes da falha), mas o teste continua valendo como rede de
+segurança contra uma futura regressão que volte a mutar saldo antes de persistir o evento.
 
 ## Exemplos de regras de negócio testadas
 

@@ -84,7 +84,7 @@ sequenceDiagram
     participant JS as account_detail.js
     participant C as account_controller.py
     participant S as AccountService
-    participant D as Account (domínio)
+    participant BR as balance_rules
     participant R as AccountRepositorySqlAlchemy
     participant DB as SQLite
 
@@ -93,17 +93,15 @@ sequenceDiagram
     C->>S: service.deposit(account_id, amount_cents)
     S->>R: get_by_id(account_id)
     R->>DB: SELECT accounts WHERE id=...
-    DB-->>R: row
-    R-->>S: Account (domínio)
-    S->>D: account.deposit(amount_cents)
+    R->>DB: SUM(transactions) para calcular balance_cents
+    DB-->>R: row + saldo calculado
+    R-->>S: Account (domínio, com balance_cents já calculado)
+    S->>BR: validate_deposit(amount_cents)
     alt amount_cents <= 0
-        D-->>S: raise InvalidAmountError
+        BR-->>S: raise InvalidAmountError
         S-->>C: propaga exceção
         C-->>JS: 400 {"detail": "..."}
     else valor válido
-        D-->>S: balance_cents atualizado em memória
-        S->>R: update(account)
-        R->>DB: UPDATE accounts SET balance_cents=...
         S->>S: transaction_rules.validate_transaction_shape("DEPOSIT", None, account.id)
         S->>R: transaction_repo.add(source=None, destination=account.id, type=DEPOSIT, ...)
         R->>DB: INSERT INTO transactions (...)
@@ -114,6 +112,10 @@ sequenceDiagram
     end
 ```
 
+Nenhum `UPDATE` em `accounts` acontece nesse fluxo — o único `INSERT` é em `transactions`; o saldo
+refletindo o novo depósito é só um efeito de a próxima leitura recalcular a soma (ver
+`05-banco-de-dados.md`, seção "Saldo como projeção sobre `transactions`").
+
 ## Withdraw — passo a passo com diagrama de sequência
 
 ```mermaid
@@ -121,7 +123,7 @@ sequenceDiagram
     participant JS as account_detail.js
     participant C as account_controller.py
     participant S as AccountService
-    participant D as Account (domínio)
+    participant BR as balance_rules
     participant R as AccountRepositorySqlAlchemy
     participant DB as SQLite
 
@@ -129,20 +131,18 @@ sequenceDiagram
     C->>C: ensure_account_owner_or_admin(current, account)
     C->>S: service.withdraw(account_id, amount_cents)
     S->>R: get_by_id(account_id)
-    R-->>S: Account (domínio)
-    S->>D: account.withdraw(amount_cents)
+    R->>DB: SUM(transactions) para calcular balance_cents
+    R-->>S: Account (domínio, com balance_cents já calculado)
+    S->>BR: validate_withdraw(account.id, amount_cents, account.balance_cents)
     alt amount_cents <= 0
-        D-->>S: raise InvalidAmountError
+        BR-->>S: raise InvalidAmountError
         S-->>C: propaga exceção
         C-->>JS: 400 InvalidAmountError
     else amount_cents > balance_cents
-        D-->>S: raise InsufficientBalanceError
+        BR-->>S: raise InsufficientBalanceError
         S-->>C: propaga exceção
         C-->>JS: 400 InsufficientBalanceError
     else saldo suficiente
-        D-->>S: balance_cents decrementado em memória
-        S->>R: update(account)
-        R->>DB: UPDATE accounts SET balance_cents=...
         S->>S: validate_transaction_shape("WITHDRAW", account.id, None)
         S->>R: transaction_repo.add(source=account.id, destination=None, type=WITHDRAW, ...)
         R->>DB: INSERT INTO transactions (...)
@@ -151,6 +151,10 @@ sequenceDiagram
         C-->>JS: 201 TransactionRead
     end
 ```
+
+Assim como no depósito, nenhum `UPDATE` em `accounts` acontece — o saque só grava um `INSERT` em
+`transactions`; a validação de saldo insuficiente acontece contra o saldo já calculado, antes de
+qualquer escrita.
 
 ## Pix Transfer — o fluxo mais elaborado do sistema
 
@@ -174,31 +178,33 @@ Passo a passo, **na ordem real em que o código executa** (ver `pix_transfer_ser
 6. **Conta de destino é localizada** — `account_repo.get_by_id(pix_key.account_id)`.
 7. **Transferência para a própria conta é rejeitada** — `if source.id == destination.id: raise
    SameAccountTransferError` (`400`).
-8. **Origem é debitada** — `source.withdraw(amount_cents)`, método de domínio de `Account`; é aqui
-   que o saldo insuficiente é detectado (`InsufficientBalanceError`, `400`), **antes** de qualquer
-   escrita no banco.
-9. **Destino é creditado** — `destination.deposit(amount_cents)`, em memória.
-10. **Ambas as contas são persistidas** — `account_repo.update(source)` e
-    `account_repo.update(destination)`, cada uma com seu `UPDATE accounts SET balance_cents=...` via
-    `session.flush()` (não `commit()` — ver `03-arquitetura.md`, seção "Atomicidade").
-11. **Forma da transação é validada** —
-    `transaction_rules.validate_transaction_shape("PIX_TRANSFER", source.id, destination.id)`.
-12. **`Transaction` é persistida** — `transaction_repo.add(source_account_id=source.id,
-    destination_account_id=destination.id, transaction_type="PIX_TRANSFER", amount_cents=...)`.
-13. **Commit acontece uma única vez**, de volta em `get_db()`, depois que o Controller retorna
-    normalmente — confirmando as duas atualizações de saldo **e** a nova `Transaction` juntas.
-14. **Erro em qualquer ponto causa rollback implícito** — se qualquer exceção for levantada entre os
-    passos 3 e 12 (saldo insuficiente, chave inexistente, erro inesperado ao persistir), a execução
-    nunca alcança `session.commit()`; `get_db()` fecha a sessão sem confirmar, descartando tudo que
-    foi feito com `flush()` até ali. Nenhuma conta fica com saldo debitado sem a `Transaction`
-    correspondente.
+8. **Saldo de origem é validado** — `balance_rules.validate_withdraw(source.id, amount_cents,
+   source.balance_cents)`, onde `source.balance_cents` já veio calculado por
+   `AccountRepositorySqlAlchemy` (soma de `transactions`); é aqui que o saldo insuficiente é
+   detectado (`InsufficientBalanceError`, `400`), **antes** de qualquer escrita no banco. Não há
+   mais um passo separado de "creditar o destino em memória" — nenhuma das duas contas é mutada.
+9. **Forma da transação é validada** —
+   `transaction_rules.validate_transaction_shape("PIX_TRANSFER", source.id, destination.id)`.
+10. **`Transaction` é persistida** — `transaction_repo.add(source_account_id=source.id,
+    destination_account_id=destination.id, transaction_type="PIX_TRANSFER", amount_cents=...)`. Esse
+    é o **único** `INSERT`/`UPDATE` que o fluxo inteiro faz — nenhum `UPDATE accounts SET
+    balance_cents=...` acontece em nenhum ponto (event sourcing: `transactions` é a única fonte de
+    verdade, ver `05-banco-de-dados.md`).
+11. **Commit acontece uma única vez**, de volta em `get_db()`, depois que o Controller retorna
+    normalmente.
+12. **Erro em qualquer ponto causa rollback implícito** — se qualquer exceção for levantada antes do
+    passo 10 (saldo insuficiente, chave inexistente), nada foi escrito ainda, então não há o que
+    reverter. Se o próprio `transaction_repo.add()` falhar, `get_db()` fecha a sessão sem confirmar;
+    como nenhuma conta é mutada antes desse ponto, não existe o risco anterior de uma conta ficar
+    "debitada em memória" sem a `Transaction` correspondente — esse risco deixou de existir com a
+    remoção da mutação de saldo.
 
 ```mermaid
 sequenceDiagram
     participant JS as pix_transfer.js
     participant C as pix_transfer_controller.py
     participant S as PixTransferService
-    participant Acc as Account (domínio)
+    participant BR as balance_rules
     participant AR as AccountRepositorySqlAlchemy
     participant PR as PixKeyRepositorySqlAlchemy
     participant TR as TransactionRepositorySqlAlchemy
@@ -211,7 +217,7 @@ sequenceDiagram
     C->>S: service.transfer(source_account_id, pix_key_value, amount_cents)
     S->>S: amount_cents <= 0 ? raise InvalidAmountError
     S->>AR: get_by_id(source_account_id)
-    AR-->>S: source (domínio)
+    AR-->>S: source (domínio, balance_cents já calculado)
     S->>PR: get_by_value(pix_key_value)
     PR-->>S: PixKey ou None
     alt chave não encontrada
@@ -220,17 +226,12 @@ sequenceDiagram
         S->>AR: get_by_id(pix_key.account_id)
         AR-->>S: destination (domínio)
         S->>S: source.id == destination.id ? raise SameAccountTransferError
-        S->>Acc: source.withdraw(amount_cents)
+        S->>BR: validate_withdraw(source.id, amount_cents, source.balance_cents)
         alt saldo insuficiente
-            Acc-->>S: raise InsufficientBalanceError
+            BR-->>S: raise InsufficientBalanceError
             S-->>C: propaga exceção
             C-->>JS: 400 InsufficientBalanceError
         else saldo ok
-            Acc->>Acc: destination.deposit(amount_cents)
-            S->>AR: update(source)
-            AR->>DB: UPDATE accounts (origem)
-            S->>AR: update(destination)
-            AR->>DB: UPDATE accounts (destino)
             S->>S: validate_transaction_shape("PIX_TRANSFER", ...)
             S->>TR: add(source, destination, "PIX_TRANSFER", amount_cents)
             TR->>DB: INSERT INTO transactions
@@ -238,7 +239,7 @@ sequenceDiagram
             TR-->>S: Transaction
             S-->>C: Transaction
             C-->>JS: 201 TransactionRead
-            Note over DB: commit único ocorre em get_db(),<br/>depois que o Controller retorna sem erro
+            Note over DB: nenhum UPDATE em accounts — só o INSERT acima.<br/>commit único ocorre em get_db(),<br/>depois que o Controller retorna sem erro
         end
     end
 ```

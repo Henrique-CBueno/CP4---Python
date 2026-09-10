@@ -24,7 +24,6 @@
       <div id="customers-error" class="alert alert-error" hidden></div>
 
       <form id="customer-form" class="card">
-        <input type="hidden" id="customer-editing-id" value="" />
         <label>Nome <input type="text" name="name" required /></label>
         <label>Email <input type="email" name="email" required /></label>
         <label>CPF <input type="text" name="cpf" required maxlength="11" /></label>
@@ -38,6 +37,22 @@
         </label>
         <button type="submit">Cadastrar</button>
       </form>
+
+      <dialog id="customer-edit-modal" class="modal">
+        <form id="customer-edit-form" class="modal-content">
+          <div class="modal-header">
+            <h3>Editar cliente</h3>
+            <button type="button" class="modal-close" aria-label="Fechar">×</button>
+          </div>
+          <input type="hidden" name="id" />
+          <label>Nome <input type="text" name="name" required /></label>
+          <label>Email <input type="email" name="email" required /></label>
+          <div class="modal-actions">
+            <button type="button" class="button-secondary" data-modal-cancel>Cancelar</button>
+            <button type="submit">Salvar alterações</button>
+          </div>
+        </form>
+      </dialog>
 
       <table class="table">
         <thead>
@@ -56,6 +71,6 @@
 
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/customers.js"></script>
+    <script src="/static/js/customers.js?v=modal-1"></script>
   </body>
 </html>

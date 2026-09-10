@@ -2,18 +2,16 @@
 
 ## Visão geral
 
-O domínio tem 4 conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. Três deles são
-**entidades de domínio puras** — `dataclass` do Python, em `app/domain/entities/`, sem nenhuma
-dependência de SQLAlchemy ou de qualquer outra camada. O quarto, `Transaction`, é uma exceção
-consciente: existe apenas como modelo SQLAlchemy (ver `03-arquitetura.md`, seção "Simplificações
-conscientes"), complementada por uma função pura de validação de forma.
+O domínio tem 4 conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. Todos são **entidades
+de domínio puras** — `dataclass` do Python, em `app/domain/entities/`, sem nenhuma dependência de
+SQLAlchemy ou de qualquer outra camada.
 
 | Conceito | É entidade de domínio pura? | Onde vive |
 |---|---|---|
 | `Customer` | Sim | `app/domain/entities/customer.py` |
-| `Account` | Sim (com comportamento: `deposit()`, `withdraw()`) | `app/domain/entities/account.py` |
+| `Account` | Sim (dataclass sem comportamento — saldo é derivado, não estado) | `app/domain/entities/account.py` |
 | `PixKey` | Sim | `app/domain/entities/pix_key.py` |
-| `Transaction` | **Não** — só modelo de persistência | `app/adapters/outbound/persistence/models.py` + `app/domain/transaction_rules.py` |
+| `Transaction` | Sim | `app/domain/entities/transaction.py` |
 
 ## `Customer`
 
@@ -43,18 +41,17 @@ class Customer:
 
 **Regras de negócio:** `Customer` em si é uma entidade sem métodos de comportamento (dataclass sem
 lógica) — as regras que o envolvem (unicidade de email/CPF, bloqueio de exclusão com contas
-associadas, autenticação) vivem em `CustomerService`, não na entidade. Isso é intencional: só
-`Account` tem comportamento real o suficiente para justificar métodos na própria entidade (ver
-seção `Account` abaixo).
+associadas, autenticação) vivem em `CustomerService`, não na entidade. `Account` segue o mesmo
+padrão (ver seção `Account` abaixo): as regras de depósito/saque vivem em
+`app/domain/balance_rules.py`, não em métodos da entidade.
 
 **Exceções relacionadas:** `CustomerNotFoundError`, `DuplicateEmailError`, `DuplicateCpfError`,
 `InvalidCpfError`, `CustomerHasAccountsError`, `InvalidCredentialsError`, `NotAuthenticatedError`.
 
 ## `Account`
 
-**Responsabilidade:** representar uma conta bancária vinculada a um cliente, com saldo e as duas
-únicas regras de negócio da aplicação que se expressam como métodos de comportamento no próprio
-domínio.
+**Responsabilidade:** representar uma conta bancária vinculada a um cliente. Não guarda saldo como
+estado próprio — o saldo é sempre derivado da soma das `Transaction` da conta (event sourcing).
 
 ```python
 @dataclass
@@ -66,19 +63,12 @@ class Account:
     label: str | None = None
     balance_cents: int = 0
     created_at: datetime | None = None
-
-    def deposit(self, amount_cents: int) -> None:
-        if amount_cents <= 0:
-            raise InvalidAmountError(amount_cents)
-        self.balance_cents += amount_cents
-
-    def withdraw(self, amount_cents: int) -> None:
-        if amount_cents <= 0:
-            raise InvalidAmountError(amount_cents)
-        if amount_cents > self.balance_cents:
-            raise InsufficientBalanceError(self.id, amount_cents, self.balance_cents)
-        self.balance_cents -= amount_cents
 ```
+
+`balance_cents` continua existindo como campo da entidade, mas deixou de ser estado gravado: é
+preenchido em tempo de leitura por `AccountRepositorySqlAlchemy._to_domain()`, que soma os créditos
+(`destination_account_id == account.id`) e subtrai os débitos (`source_account_id == account.id`)
+de `transactions`. A tabela `accounts` não tem mais coluna de saldo (ver `05-banco-de-dados.md`).
 
 | Campo | Regra |
 |---|---|
@@ -86,24 +76,26 @@ class Account:
 | `number` | único globalmente no sistema |
 | `agency` | informativo, não entra em regra de unicidade |
 | `label` | apelido opcional |
-| `balance_cents` | inteiro, nunca negativo, inicia em `0` |
+| `balance_cents` | derivado de `transactions`; nunca persistido diretamente |
 
 **Relacionamentos:** pertence a um `Customer`; possui zero ou mais `PixKey`; participa de zero ou
 mais `Transaction`, tanto como origem quanto como destino.
 
 **Business rules e invariantes (verificáveis diretamente no código):**
 
-- **Valor inválido:** `deposit()` e `withdraw()` rejeitam `amount_cents <= 0` com
-  `InvalidAmountError` — mesma regra nos dois métodos, sem exceção para valores negativos ou zero.
-- **Saldo insuficiente:** `withdraw()` rejeita `amount_cents > balance_cents` com
-  `InsufficientBalanceError`, antes de alterar o saldo — o saldo só é decrementado se a validação
-  passar.
-- **Saldo nunca negativo:** garantido em três camadas simultaneamente — pela lógica em `withdraw()`,
-  por uma `CheckConstraint("balance_cents >= 0")` na tabela `accounts` (rede de segurança no banco),
-  e por testes automatizados (`tests/unit/`, `tests/service/test_account_service.py`).
-- **Exclusão bloqueada:** uma `Account` só pode ser removida se `balance_cents == 0` e não tiver
-  `PixKey` nem `Transaction` associada — regra aplicada em `AccountService.delete()`, não na
-  entidade.
+- **Valor inválido:** `balance_rules.validate_deposit()` e `balance_rules.validate_withdraw()`
+  (`app/domain/balance_rules.py`) rejeitam `amount_cents <= 0` com `InvalidAmountError` — chamadas
+  por `AccountService.deposit()`/`withdraw()` e por `PixTransferService.transfer()`.
+- **Saldo insuficiente:** `balance_rules.validate_withdraw()` rejeita `amount_cents >
+  current_balance_cents` com `InsufficientBalanceError`, antes de gravar a transação — nenhum
+  evento de saque/transferência é persistido se a validação falhar.
+- **Saldo nunca negativo:** como só existe crédito (soma) ou débito validado contra o saldo atual,
+  não há caminho de código que produza um saldo somado negativo — não depende mais de uma
+  `CheckConstraint` no banco (removida junto com a coluna), só da soma dos eventos.
+- **Exclusão bloqueada:** uma `Account` só pode ser removida se não tiver `PixKey` nem `Transaction`
+  associada — regra aplicada em `AccountService.delete()`. Não existe mais checagem explícita de
+  saldo: saldo não-zero sempre implica pelo menos uma `Transaction`, então `has_transactions()`
+  já cobre esse caso.
 
 **Exceções relacionadas:** `AccountNotFoundError`, `DuplicateAccountNumberError`,
 `InvalidAmountError`, `InsufficientBalanceError`, `AccountHasDependenciesError`.
@@ -229,8 +221,6 @@ classDiagram
         +str label
         +int balance_cents
         +datetime created_at
-        +deposit(amount_cents)
-        +withdraw(amount_cents)
     }
     class PixKey {
         +int id
@@ -260,14 +250,14 @@ classDiagram
 
 **Valor inválido (depósito ou saque):**
 ```python
-account.deposit(-100)   # → InvalidAmountError("amount_cents must be greater than zero, got -100")
-account.withdraw(0)     # → InvalidAmountError(...)
+account_service.deposit(account_id, -100)  # → InvalidAmountError(...)
+account_service.withdraw(account_id, 0)    # → InvalidAmountError(...)
 ```
 
 **Saldo insuficiente:**
 ```python
-# account.balance_cents == 500
-account.withdraw(1000)  # → InsufficientBalanceError(account_id, 1000, 500)
+# account.balance_cents == 500 (calculado a partir de transactions)
+account_service.withdraw(account_id, 1000)  # → InsufficientBalanceError(account_id, 1000, 500)
 ```
 
 **Chave Pix duplicada:**
@@ -314,7 +304,7 @@ SQLAlchemy ou FastAPI:
 | `InsufficientBalanceError` | saque/transferência maior que o saldo |
 | `SameAccountTransferError` | transferência para a própria conta |
 | `CustomerHasAccountsError` | exclusão de cliente com contas associadas |
-| `AccountHasDependenciesError` | exclusão de conta com saldo, chaves ou transações |
+| `AccountHasDependenciesError` | exclusão de conta com chaves ou transações associadas |
 | `InvalidTransactionShapeError` | forma de `Transaction` incompatível com o `type` |
 | `NotAuthenticatedError` | sem sessão válida |
 | `InvalidCredentialsError` | email/senha incorretos no login |

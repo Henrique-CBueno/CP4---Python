@@ -1,8 +1,9 @@
 const listEl = document.getElementById("customers-list");
 const formEl = document.getElementById("customer-form");
 const errorEl = document.getElementById("customers-error");
-const editingIdEl = document.getElementById("customer-editing-id");
-const submitButtonEl = formEl.querySelector("button[type=submit]");
+const editModalEl = document.getElementById("customer-edit-modal");
+const editFormEl = document.getElementById("customer-edit-form");
+const editIdEl = editFormEl.elements.id;
 
 function showError(message) {
   errorEl.textContent = message;
@@ -16,12 +17,11 @@ function clearError() {
 
 function resetForm() {
   formEl.reset();
-  editingIdEl.value = "";
-  formEl.cpf.disabled = false;
-  formEl.password.disabled = false;
-  formEl.password.required = true;
-  formEl.role.disabled = false;
-  submitButtonEl.textContent = "Cadastrar";
+}
+
+function closeEditModal() {
+  editModalEl.close();
+  editFormEl.reset();
 }
 
 async function loadCustomers() {
@@ -71,16 +71,10 @@ listEl.addEventListener("click", async (event) => {
   }
 
   if (button.dataset.action === "edit") {
-    formEl.name.value = button.dataset.name;
-    formEl.email.value = button.dataset.email;
-    formEl.cpf.value = "";
-    formEl.cpf.disabled = true;
-    formEl.password.value = "";
-    formEl.password.disabled = true;
-    formEl.password.required = false;
-    formEl.role.disabled = true;
-    editingIdEl.value = id;
-    submitButtonEl.textContent = "Salvar";
+    editIdEl.value = id;
+    editFormEl.name.value = button.dataset.name;
+    editFormEl.email.value = button.dataset.email;
+    editModalEl.showModal();
   }
 });
 
@@ -88,27 +82,39 @@ formEl.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearError();
 
-  const editingId = editingIdEl.value;
-
   try {
-    if (editingId) {
-      await apiPut(`/customers/${editingId}`, {
-        name: formEl.name.value,
-        email: formEl.email.value,
-      });
-    } else {
-      await apiPost("/customers", {
-        name: formEl.name.value,
-        email: formEl.email.value,
-        cpf: formEl.cpf.value,
-        password: formEl.password.value,
-        role: formEl.role.value,
-      });
-    }
+    await apiPost("/customers", {
+      name: formEl.name.value,
+      email: formEl.email.value,
+      cpf: formEl.cpf.value,
+      password: formEl.password.value,
+      role: formEl.role.value,
+    });
     resetForm();
     await loadCustomers();
   } catch (err) {
     showError(err.message);
+  }
+});
+
+editFormEl.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearError();
+  try {
+    await apiPut(`/customers/${editIdEl.value}`, {
+      name: editFormEl.name.value,
+      email: editFormEl.email.value,
+    });
+    closeEditModal();
+    await loadCustomers();
+  } catch (err) {
+    showError(err.message);
+  }
+});
+
+editModalEl.addEventListener("click", (event) => {
+  if (event.target === editModalEl || event.target.closest("[data-modal-cancel], .modal-close")) {
+    closeEditModal();
   }
 });
 

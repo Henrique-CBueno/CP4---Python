@@ -44,7 +44,6 @@
       <section>
         <h3>Chaves Pix</h3>
         <form id="pix-key-form" class="card">
-          <input type="hidden" id="pix-key-editing-id" value="" />
           <label>
             Tipo
             <select name="type" required>
@@ -57,6 +56,30 @@
           <label>Valor <input type="text" name="value" required placeholder="gerado automaticamente para RANDOM" /></label>
           <button type="submit">Cadastrar chave</button>
         </form>
+
+        <dialog id="pix-key-edit-modal" class="modal">
+          <form id="pix-key-edit-form" class="modal-content">
+            <div class="modal-header">
+              <h3>Editar chave Pix</h3>
+              <button type="button" class="modal-close" aria-label="Fechar">×</button>
+            </div>
+            <input type="hidden" name="id" />
+            <label>
+              Tipo
+              <select name="type" required>
+                <option value="CPF">CPF</option>
+                <option value="EMAIL">EMAIL</option>
+                <option value="PHONE">PHONE</option>
+                <option value="RANDOM">RANDOM</option>
+              </select>
+            </label>
+            <label>Valor <input type="text" name="value" required /></label>
+            <div class="modal-actions">
+              <button type="button" class="button-secondary" data-modal-cancel>Cancelar</button>
+              <button type="submit">Salvar alterações</button>
+            </div>
+          </form>
+        </dialog>
 
         <table class="table">
           <thead>
@@ -89,6 +112,6 @@
 
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/account_detail.js"></script>
+    <script src="/static/js/account_detail.js?v=modal-1"></script>
   </body>
 </html>

@@ -5,8 +5,9 @@
 Banco **SQLite**, arquivo único `bank.db` na raiz do projeto (`app/infrastructure/config.py::DATABASE_PATH`).
 Schema definido via SQLAlchemy 2.x (`Mapped`/`mapped_column`) em
 `app/adapters/outbound/persistence/models.py` — 4 tabelas, sem nenhuma tabela auxiliar ou de
-junção. As migrações versionadas vivem em `alembic/versions/` (uma única migração até o momento,
-`7af7709706ad_initial_schema.py`, gerada por autogenerate a partir do `models.py`).
+junção. As migrações versionadas vivem em `alembic/versions/`: `7af7709706ad_initial_schema.py`
+(schema inicial) e `0f4be3daa031_remove_balance_cents_from_accounts.py` (remove a coluna de saldo
+de `accounts` — ver seção "Saldo como projeção" abaixo).
 
 ## `customers`
 
@@ -29,8 +30,9 @@ junção. As migrações versionadas vivem em `alembic/versions/` (uma única mi
 | `agency` | `TEXT` | `NOT NULL` |
 | `number` | `TEXT` | `NOT NULL`, `UNIQUE` |
 | `label` | `TEXT` | nullable |
-| `balance_cents` | `INTEGER` | `NOT NULL`, default `0`, `CHECK(balance_cents >= 0)` |
 | `created_at` | `DATETIME` | `NOT NULL`, default `now()` |
+
+Não existe coluna de saldo. Ver "Saldo como projeção sobre `transactions`" abaixo.
 
 ## `pix_keys`
 
@@ -67,6 +69,29 @@ elimina essa classe inteira de bug sem precisar de um tipo `Decimal` ou de um `T
 customizado no SQLAlchemy — a soma e subtração de inteiros é sempre exata. A conversão para reais
 formatados (`"R$ 10,50"`) acontece só no frontend, nunca no backend (ver `04-modelo-de-dominio.md` e
 `08-frontend.md`).
+
+## Saldo como projeção sobre `transactions`
+
+`accounts` não tem coluna de saldo — `transactions` é a única fonte de verdade sobre movimentações
+financeiras (event sourcing). O saldo de uma conta é sempre calculado somando os créditos
+(linhas onde `destination_account_id` é a conta) e subtraindo os débitos (linhas onde
+`source_account_id` é a conta):
+
+```sql
+SELECT
+    COALESCE(SUM(CASE WHEN destination_account_id = :id THEN amount_cents END), 0)
+  - COALESCE(SUM(CASE WHEN source_account_id      = :id THEN amount_cents END), 0)
+FROM transactions;
+```
+
+Isso é feito em duas queries equivalentes em
+`AccountRepositorySqlAlchemy._compute_balance()`, executadas toda vez que uma `Account` é lida
+(`get_by_id`, `list`, `list_by_customer`). Depositar/sacar/transferir passa a ser só um `INSERT` em
+`transactions` — nenhum `UPDATE` em `accounts` acontece nesses fluxos (ver `07-fluxos-principais.md`).
+O trade-off consciente é ler mais (soma sobre todo o histórico da conta a cada leitura) para não
+ter estado redundante nem risco de saldo e histórico divergirem — aceitável no volume de um projeto
+acadêmico; em produção isso normalmente seria mitigado com uma projeção materializada/cache
+recalculada a cada evento, o que este projeto não implementa.
 
 ## Por que `source_account_id`/`destination_account_id` são duas FKs opcionais na mesma tabela
 
@@ -127,7 +152,6 @@ erDiagram
         string agency
         string number UK
         string label
-        int balance_cents
         datetime created_at
     }
     PIX_KEYS {
@@ -154,7 +178,7 @@ erDiagram
 |---|---|---|
 | `customers` → `accounts` | `RESTRICT` | `CustomerService.delete()`: `CustomerHasAccountsError` se `account_repo.list_by_customer(id)` não for vazio |
 | `accounts` → `pix_keys` | `RESTRICT` | `AccountService.delete()`: `AccountHasDependenciesError` se `has_pix_keys(id)` |
-| `accounts` → `transactions` | `RESTRICT` | `AccountService.delete()`: `AccountHasDependenciesError` se `has_transactions(id)` ou `balance_cents != 0` |
+| `accounts` → `transactions` | `RESTRICT` | `AccountService.delete()`: `AccountHasDependenciesError` se `has_transactions(id)` (saldo não-zero sempre implica transação existente) |
 | `pix_keys` | sem dependentes | exclusão sempre permitida — `PixKeyService.delete()` não faz nenhuma checagem adicional |
 
 Nenhuma exclusão em cascata (`ON DELETE CASCADE`) é usada em nenhuma FK — toda validação de
