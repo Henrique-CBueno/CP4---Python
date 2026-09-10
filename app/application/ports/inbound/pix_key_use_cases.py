@@ -1,0 +1,19 @@
+from __future__ import annotations
+
+from typing import Protocol
+
+from app.domain.entities.pix_key import PixKey
+
+
+class PixKeyUseCases(Protocol):
+    def create(self, account_id: int, key_type: str, value: str) -> PixKey: ...
+
+    def list(self) -> list[PixKey]: ...
+
+    def list_by_account(self, account_id: int) -> list[PixKey]: ...
+
+    def get(self, pix_key_id: int) -> PixKey: ...
+
+    def update(self, pix_key_id: int, key_type: str | None, value: str | None) -> PixKey: ...
+
+    def delete(self, pix_key_id: int) -> None: ...

@@ -9,6 +9,7 @@ from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
     CustomerRepositorySqlAlchemy,
 )
+from app.application.ports.inbound.customer_use_cases import CustomerUseCases
 from app.application.services.customer_service import CustomerService
 from app.domain.entities.customer import Customer
 from app.infrastructure.db import get_db
@@ -16,7 +17,7 @@ from app.infrastructure.db import get_db
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def get_customer_service(db: Session = Depends(get_db)) -> CustomerService:
+def get_customer_service(db: Session = Depends(get_db)) -> CustomerUseCases:
     return CustomerService(
         customer_repo=CustomerRepositorySqlAlchemy(db),
         account_repo=AccountRepositorySqlAlchemy(db),
@@ -27,7 +28,7 @@ def get_customer_service(db: Session = Depends(get_db)) -> CustomerService:
 def login(
     request: Request,
     body: LoginRequest,
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> CurrentUserRead:
     customer = service.authenticate(email=body.email, password=body.password)
     request.session["customer_id"] = customer.id

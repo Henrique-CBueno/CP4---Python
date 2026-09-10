@@ -13,6 +13,7 @@ from app.adapters.outbound.persistence.pix_key_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import (
     TransactionRepositorySqlAlchemy,
 )
+from app.application.ports.inbound.pix_transfer_use_cases import PixTransferUseCases
 from app.application.services.pix_transfer_service import PixTransferService
 from app.domain.entities.customer import Customer
 from app.domain.exceptions import AccountNotFoundError
@@ -21,7 +22,7 @@ from app.infrastructure.db import get_db
 router = APIRouter(prefix="/api/pix", tags=["pix-transfer"])
 
 
-def get_pix_transfer_service(db: Session = Depends(get_db)) -> PixTransferService:
+def get_pix_transfer_service(db: Session = Depends(get_db)) -> PixTransferUseCases:
     return PixTransferService(
         account_repo=AccountRepositorySqlAlchemy(db),
         pix_key_repo=PixKeyRepositorySqlAlchemy(db),
@@ -34,7 +35,7 @@ def transfer(
     body: PixTransferRequest,
     current: Customer = Depends(get_current_customer),
     db: Session = Depends(get_db),
-    service: PixTransferService = Depends(get_pix_transfer_service),
+    service: PixTransferUseCases = Depends(get_pix_transfer_service),
 ) -> TransactionRead:
     source_account = AccountRepositorySqlAlchemy(db).get_by_id(body.source_account_id)
     if source_account is None:
