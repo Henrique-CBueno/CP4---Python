@@ -510,3 +510,40 @@ alembic downgrade -1                                             # desfaz a últ
 todas as entidades via `app.adapters.outbound.persistence.models`. Para gerar/testar uma migração
 sem tocar no `bank.db` real, aponte para outro arquivo temporariamente:
 `ALEMBIC_DATABASE_URL="sqlite:///teste.db" alembic upgrade head`.
+
+## Integrantes
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/88509491?v=4" width="115" alt="Foto de Henrique Bueno"/><br>
+      <sub>
+        <b>Henrique Bueno - RM570591</b>
+      </sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/163877731?v=4" width="115" alt="Foto de Állex Brandão"/><br>
+      <sub>
+        <b>Állex Brandão - RM571383</b>
+      </sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/53922235?v=4" width="115" alt="Foto de Erick Nathan"/><br>
+      <sub>
+        <b>Erick Nathan - RM573635</b>
+      </sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/132668384?v=4" width="115" alt="Foto de Murilo Gomes"/><br>
+      <sub>
+        <b>Murilo Gomes - RM570941</b>
+      </sub>
+    </td>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/108024578?v=4" width="115" alt="Foto de Enzo Abreu"/><br>
+      <sub>
+        <b>Enzo Abreu - RM572995</b>
+      </sub>
+    </td>
+  </tr>
+</table>
