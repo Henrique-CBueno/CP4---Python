@@ -35,6 +35,4 @@ def downgrade() -> None:
         batch_op.add_column(
             sa.Column("balance_cents", sa.Integer(), nullable=False, server_default="0")
         )
-        batch_op.create_check_constraint(
-            "ck_accounts_balance_non_negative", "balance_cents >= 0"
-        )
+        batch_op.create_check_constraint("ck_accounts_balance_non_negative", "balance_cents >= 0")
