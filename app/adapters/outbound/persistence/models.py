@@ -25,9 +25,6 @@ class Customer(Base):
 
 class Account(Base):
     __tablename__ = "accounts"
-    __table_args__ = (
-        CheckConstraint("balance_cents >= 0", name="ck_accounts_balance_non_negative"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     customer_id: Mapped[int] = mapped_column(
@@ -36,7 +33,6 @@ class Account(Base):
     agency: Mapped[str] = mapped_column(String, nullable=False)
     number: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     label: Mapped[str | None] = mapped_column(String, nullable=True)
-    balance_cents: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
 

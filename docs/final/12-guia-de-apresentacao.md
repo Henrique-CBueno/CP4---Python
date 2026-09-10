@@ -40,18 +40,22 @@ de 'esse cliente é dono desta conta?' lê o repositório direto em alguns ponto
 Service — pragmatismo assumido, não descuido."
 
 ### 4. Modelo de domínio (60s)
-"Quatro conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. `Account` é o único com
-comportamento real: `deposit()` e `withdraw()`, que validam valor positivo e saldo suficiente."
+"Quatro conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. Nenhuma entidade tem
+comportamento próprio — `Account`, em particular, não guarda saldo como estado: o saldo é sempre
+calculado somando as `Transaction` da conta (event sourcing). Valor positivo e saldo suficiente são
+validados em `app/domain/balance_rules.py`, não em métodos da entidade."
 
-**Abrir:** `app/domain/entities/account.py` (mostrar os dois métodos, são 10 linhas).
+**Abrir:** `app/domain/balance_rules.py` (curto, `validate_deposit`/`validate_withdraw`) e
+`app/adapters/outbound/persistence/account_repository_sqlalchemy.py::_compute_balance()` (mostrar
+de onde o saldo realmente vem).
 
 ### 5. Banco de dados (45s)
 "Dinheiro é sempre inteiro em centavos, nunca `float` — evita erro de arredondamento. Quatro
-tabelas, com `CHECK` constraints reforçando as mesmas regras do domínio: saldo nunca negativo, valor
-de transação sempre positivo."
+tabelas — e `accounts` não tem coluna de saldo: `transactions` é a única fonte de verdade sobre
+movimentações financeiras, o saldo é projetado a partir dela em tempo de leitura."
 
-**Abrir:** `app/adapters/outbound/persistence/models.py` (mostrar as `CheckConstraint` de `Account`
-e `Transaction`).
+**Abrir:** `app/adapters/outbound/persistence/models.py` (mostrar que `Account` não tem
+`balance_cents`) e a migration `alembic/versions/0f4be3daa031_remove_balance_cents_from_accounts.py`.
 
 ### 6. Frontend consumindo a API (45s)
 "Nenhuma página tem `<form action>` tradicional — todo envio de dado passa por `fetch()`, através de
@@ -66,14 +70,17 @@ persistência."
 
 **Abrir:** `app/application/services/pix_transfer_service.py`, e narrar linha por linha:
 "Valida o valor primeiro. Busca a conta de origem. Resolve a chave Pix. Busca a conta de destino.
-Rejeita se for a mesma conta. Debita a origem — `source.withdraw()`, que é onde saldo insuficiente é
-detectado, antes de qualquer escrita. Credita o destino. Persiste as duas contas. Persiste a
-`Transaction`. Tudo isso usa `flush()`, não `commit()` — o commit só acontece uma vez, depois que o
-Controller retorna sem erro, lá em `get_db()`. Se qualquer coisa falhar no meio, nada é confirmado."
+Rejeita se for a mesma conta. Valida o saldo — `balance_rules.validate_withdraw()`, contra o saldo
+já calculado da conta de origem, é onde saldo insuficiente é detectado, antes de qualquer escrita.
+Persiste a `Transaction` — esse é o único `INSERT`/`UPDATE` do fluxo inteiro, nenhuma conta é
+mutada. Usa `flush()`, não `commit()` — o commit só acontece uma vez, depois que o Controller
+retorna sem erro, lá em `get_db()`. Se qualquer coisa falhar antes desse `INSERT`, nada foi escrito
+ainda."
 
 **Se der tempo, mostrar também:**
 `tests/service/test_pix_transfer_service.py::test_transfer_atomicity_on_failure` — o teste que força
-uma falha depois do débito e confirma, consultando o banco, que o saldo não mudou.
+uma falha na criação da `Transaction` e confirma, consultando o banco, que o saldo calculado não
+mudou.
 
 ### 8. Testes (45s)
 "A suíte tem três camadas: testes de domínio puro, sem banco; testes de serviço, com SQLite

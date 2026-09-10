@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.application.ports.account_repository import AccountRepository
 from app.application.ports.customer_repository import CustomerRepository
 from app.application.ports.transaction_repository import TransactionRepository
-from app.domain import transaction_rules
+from app.domain import balance_rules, transaction_rules
 from app.domain.entities.account import Account
 from app.domain.entities.transaction import Transaction
 from app.domain.exceptions import (
@@ -67,19 +67,16 @@ class AccountService:
 
     def delete(self, account_id: int) -> None:
         account = self.get(account_id)
-        has_dependencies = (
-            account.balance_cents != 0
-            or self._account_repo.has_pix_keys(account_id)
-            or self._account_repo.has_transactions(account_id)
-        )
+        has_dependencies = self._account_repo.has_pix_keys(
+            account_id
+        ) or self._account_repo.has_transactions(account_id)
         if has_dependencies:
             raise AccountHasDependenciesError(account_id)
         self._account_repo.delete(account)
 
     def deposit(self, account_id: int, amount_cents: int) -> Transaction:
         account = self.get(account_id)
-        account.deposit(amount_cents)
-        self._account_repo.update(account)
+        balance_rules.validate_deposit(amount_cents)
         transaction_rules.validate_transaction_shape("DEPOSIT", None, account.id)
         return self._transaction_repo.add(
             source_account_id=None,
@@ -94,8 +91,7 @@ class AccountService:
 
     def withdraw(self, account_id: int, amount_cents: int) -> Transaction:
         account = self.get(account_id)
-        account.withdraw(amount_cents)
-        self._account_repo.update(account)
+        balance_rules.validate_withdraw(account.id, amount_cents, account.balance_cents)
         transaction_rules.validate_transaction_shape("WITHDRAW", account.id, None)
         return self._transaction_repo.add(
             source_account_id=account.id,

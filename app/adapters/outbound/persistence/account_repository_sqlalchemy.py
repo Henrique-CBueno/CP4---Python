@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import exists, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from app.adapters.outbound.persistence.models import Account as AccountModel
@@ -37,7 +37,6 @@ class AccountRepositorySqlAlchemy:
             agency=account.agency,
             number=account.number,
             label=account.label,
-            balance_cents=account.balance_cents,
         )
         self._session.add(model)
         self._session.flush()
@@ -47,7 +46,6 @@ class AccountRepositorySqlAlchemy:
         model = self._session.get(AccountModel, account.id)
         model.agency = account.agency
         model.label = account.label
-        model.balance_cents = account.balance_cents
         self._session.flush()
         return self._to_domain(model)
 
@@ -73,14 +71,26 @@ class AccountRepositorySqlAlchemy:
             )
         )
 
-    @staticmethod
-    def _to_domain(model: AccountModel) -> Account:
+    def _compute_balance(self, account_id: int) -> int:
+        credits = self._session.scalar(
+            select(func.coalesce(func.sum(TransactionModel.amount_cents), 0)).where(
+                TransactionModel.destination_account_id == account_id
+            )
+        )
+        debits = self._session.scalar(
+            select(func.coalesce(func.sum(TransactionModel.amount_cents), 0)).where(
+                TransactionModel.source_account_id == account_id
+            )
+        )
+        return credits - debits
+
+    def _to_domain(self, model: AccountModel) -> Account:
         return Account(
             id=model.id,
             customer_id=model.customer_id,
             agency=model.agency,
             number=model.number,
             label=model.label,
-            balance_cents=model.balance_cents,
+            balance_cents=self._compute_balance(model.id),
             created_at=model.created_at,
         )
