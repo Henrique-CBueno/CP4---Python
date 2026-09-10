@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from app.adapters.outbound.persistence.models import Transaction
 from app.application.ports.account_repository import AccountRepository
 from app.application.ports.pix_key_repository import PixKeyRepository
 from app.application.ports.transaction_repository import TransactionRepository
 from app.domain import transaction_rules
+from app.domain.entities.transaction import Transaction
 from app.domain.exceptions import (
     AccountNotFoundError,
     InvalidAmountError,

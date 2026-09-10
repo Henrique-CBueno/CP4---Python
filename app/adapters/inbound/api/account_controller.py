@@ -22,15 +22,16 @@ from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import (
     TransactionRepositorySqlAlchemy,
 )
+from app.application.ports.inbound.account_use_cases import AccountUseCases
+from app.application.ports.inbound.pix_key_use_cases import PixKeyUseCases
 from app.application.services.account_service import AccountService
-from app.application.services.pix_key_service import PixKeyService
 from app.domain.entities.customer import Customer
 from app.infrastructure.db import get_db
 
 router = APIRouter(prefix="/api/accounts", tags=["accounts"])
 
 
-def get_account_service(db: Session = Depends(get_db)) -> AccountService:
+def get_account_service(db: Session = Depends(get_db)) -> AccountUseCases:
     return AccountService(
         account_repo=AccountRepositorySqlAlchemy(db),
         customer_repo=CustomerRepositorySqlAlchemy(db),
@@ -42,7 +43,7 @@ def get_account_service(db: Session = Depends(get_db)) -> AccountService:
 def create_account(
     body: AccountCreate,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> AccountRead:
     ensure_admin(current)
     account = service.create(
@@ -54,7 +55,7 @@ def create_account(
 @router.get("", response_model=list[AccountRead])
 def list_accounts(
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> list[AccountRead]:
     accounts = service.list() if current.role == "ADMIN" else service.list_by_customer(current.id)
     return [AccountRead.model_validate(account) for account in accounts]
@@ -64,7 +65,7 @@ def list_accounts(
 def get_account(
     account_id: int,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> AccountRead:
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
@@ -76,7 +77,7 @@ def update_account(
     account_id: int,
     body: AccountUpdate,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> AccountRead:
     ensure_admin(current)
     account = service.update(account_id, agency=body.agency, label=body.label)
@@ -87,7 +88,7 @@ def update_account(
 def delete_account(
     account_id: int,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> None:
     ensure_admin(current)
     service.delete(account_id)
@@ -97,7 +98,7 @@ def delete_account(
 def get_account_balance(
     account_id: int,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> dict[str, int]:
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
@@ -111,12 +112,14 @@ def deposit(
     account_id: int,
     body: DepositRequest,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> TransactionRead:
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
     transaction = service.deposit(account_id, body.amount_cents)
-    return TransactionRead.model_validate(transaction) # Transforma "dict" em "TransactionRead" para retornar o objeto correto no response_model
+    return TransactionRead.model_validate(
+        transaction
+    )  # Transforma "dict" em "TransactionRead" para retornar o objeto correto no response_model
 
 
 @router.post(
@@ -126,7 +129,7 @@ def withdraw(
     account_id: int,
     body: WithdrawRequest,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> TransactionRead:
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
@@ -138,7 +141,7 @@ def withdraw(
 def get_account_statement(
     account_id: int,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> list[TransactionRead]:
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
@@ -149,8 +152,8 @@ def get_account_statement(
 def list_account_pix_keys(
     account_id: int,
     current: Customer = Depends(get_current_customer),
-    account_service: AccountService = Depends(get_account_service),
-    pix_key_service: PixKeyService = Depends(get_pix_key_service),
+    account_service: AccountUseCases = Depends(get_account_service),
+    pix_key_service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> list[PixKeyRead]:
     account = account_service.get(account_id)
     ensure_account_owner_or_admin(current, account)

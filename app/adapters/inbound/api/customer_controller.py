@@ -16,7 +16,8 @@ from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
     CustomerRepositorySqlAlchemy,
 )
-from app.application.services.account_service import AccountService
+from app.application.ports.inbound.account_use_cases import AccountUseCases
+from app.application.ports.inbound.customer_use_cases import CustomerUseCases
 from app.application.services.customer_service import CustomerService
 from app.domain.entities.customer import Customer
 from app.infrastructure.db import get_db
@@ -24,7 +25,7 @@ from app.infrastructure.db import get_db
 router = APIRouter(prefix="/api/customers", tags=["customers"])
 
 
-def get_customer_service(db: Session = Depends(get_db)) -> CustomerService:
+def get_customer_service(db: Session = Depends(get_db)) -> CustomerUseCases:
     return CustomerService(
         customer_repo=CustomerRepositorySqlAlchemy(db),
         account_repo=AccountRepositorySqlAlchemy(db),
@@ -35,7 +36,7 @@ def get_customer_service(db: Session = Depends(get_db)) -> CustomerService:
 def create_customer(
     body: CustomerCreate,
     current: Customer = Depends(get_current_customer),
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> CustomerRead:
     ensure_admin(current)
     customer = service.create(
@@ -47,7 +48,7 @@ def create_customer(
 @router.get("", response_model=list[CustomerRead])
 def list_customers(
     current: Customer = Depends(get_current_customer),
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> list[CustomerRead]:
     ensure_admin(current)
     return [CustomerRead.model_validate(customer) for customer in service.list()]
@@ -57,7 +58,7 @@ def list_customers(
 def get_customer(
     customer_id: int,
     current: Customer = Depends(get_current_customer),
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> CustomerRead:
     ensure_self_or_admin(current, customer_id)
     return CustomerRead.model_validate(service.get(customer_id))
@@ -68,7 +69,7 @@ def update_customer(
     customer_id: int,
     body: CustomerUpdate,
     current: Customer = Depends(get_current_customer),
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> CustomerRead:
     ensure_self_or_admin(current, customer_id)
     customer = service.update(customer_id, name=body.name, email=body.email)
@@ -79,7 +80,7 @@ def update_customer(
 def delete_customer(
     customer_id: int,
     current: Customer = Depends(get_current_customer),
-    service: CustomerService = Depends(get_customer_service),
+    service: CustomerUseCases = Depends(get_customer_service),
 ) -> None:
     ensure_admin(current)
     service.delete(customer_id)
@@ -89,7 +90,7 @@ def delete_customer(
 def list_customer_accounts(
     customer_id: int,
     current: Customer = Depends(get_current_customer),
-    service: AccountService = Depends(get_account_service),
+    service: AccountUseCases = Depends(get_account_service),
 ) -> list[AccountRead]:
     ensure_self_or_admin(current, customer_id)
     return [

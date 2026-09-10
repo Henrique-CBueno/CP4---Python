@@ -2,18 +2,16 @@
 
 ## Visão geral
 
-O domínio tem 4 conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. Três deles são
-**entidades de domínio puras** — `dataclass` do Python, em `app/domain/entities/`, sem nenhuma
-dependência de SQLAlchemy ou de qualquer outra camada. O quarto, `Transaction`, é uma exceção
-consciente: existe apenas como modelo SQLAlchemy (ver `03-arquitetura.md`, seção "Simplificações
-conscientes"), complementada por uma função pura de validação de forma.
+O domínio tem 4 conceitos: `Customer`, `Account`, `PixKey` e `Transaction`. Todos são **entidades
+de domínio puras** — `dataclass` do Python, em `app/domain/entities/`, sem nenhuma dependência de
+SQLAlchemy ou de qualquer outra camada.
 
 | Conceito | É entidade de domínio pura? | Onde vive |
 |---|---|---|
 | `Customer` | Sim | `app/domain/entities/customer.py` |
 | `Account` | Sim (com comportamento: `deposit()`, `withdraw()`) | `app/domain/entities/account.py` |
 | `PixKey` | Sim | `app/domain/entities/pix_key.py` |
-| `Transaction` | **Não** — só modelo de persistência | `app/adapters/outbound/persistence/models.py` + `app/domain/transaction_rules.py` |
+| `Transaction` | Sim | `app/domain/entities/transaction.py` |
 
 ## `Customer`
 

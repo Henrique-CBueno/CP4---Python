@@ -10,6 +10,7 @@ from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.pix_key_repository_sqlalchemy import (
     PixKeyRepositorySqlAlchemy,
 )
+from app.application.ports.inbound.pix_key_use_cases import PixKeyUseCases
 from app.application.services.pix_key_service import PixKeyService
 from app.domain.entities.customer import Customer
 from app.domain.exceptions import AccountNotFoundError
@@ -18,7 +19,7 @@ from app.infrastructure.db import get_db
 router = APIRouter(prefix="/api/pix-keys", tags=["pix-keys"])
 
 
-def get_pix_key_service(db: Session = Depends(get_db)) -> PixKeyService:
+def get_pix_key_service(db: Session = Depends(get_db)) -> PixKeyUseCases:
     return PixKeyService(
         pix_key_repo=PixKeyRepositorySqlAlchemy(db),
         account_repo=AccountRepositorySqlAlchemy(db),
@@ -37,7 +38,7 @@ def create_pix_key(
     body: PixKeyCreate,
     current: Customer = Depends(get_current_customer),
     db: Session = Depends(get_db),
-    service: PixKeyService = Depends(get_pix_key_service),
+    service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> PixKeyRead:
     _ensure_owns_account(db, current, body.account_id)
     pix_key = service.create(account_id=body.account_id, key_type=body.type.value, value=body.value)
@@ -47,7 +48,7 @@ def create_pix_key(
 @router.get("", response_model=list[PixKeyRead])
 def list_pix_keys(
     current: Customer = Depends(get_current_customer),
-    service: PixKeyService = Depends(get_pix_key_service),
+    service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> list[PixKeyRead]:
     ensure_admin(current)
     return [PixKeyRead.model_validate(pix_key) for pix_key in service.list()]
@@ -58,7 +59,7 @@ def get_pix_key(
     pix_key_id: int,
     current: Customer = Depends(get_current_customer),
     db: Session = Depends(get_db),
-    service: PixKeyService = Depends(get_pix_key_service),
+    service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> PixKeyRead:
     pix_key = service.get(pix_key_id)
     _ensure_owns_account(db, current, pix_key.account_id)
@@ -71,7 +72,7 @@ def update_pix_key(
     body: PixKeyUpdate,
     current: Customer = Depends(get_current_customer),
     db: Session = Depends(get_db),
-    service: PixKeyService = Depends(get_pix_key_service),
+    service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> PixKeyRead:
     existing = service.get(pix_key_id)
     _ensure_owns_account(db, current, existing.account_id)
@@ -85,7 +86,7 @@ def delete_pix_key(
     pix_key_id: int,
     current: Customer = Depends(get_current_customer),
     db: Session = Depends(get_db),
-    service: PixKeyService = Depends(get_pix_key_service),
+    service: PixKeyUseCases = Depends(get_pix_key_service),
 ) -> None:
     pix_key = service.get(pix_key_id)
     _ensure_owns_account(db, current, pix_key.account_id)
