@@ -179,8 +179,7 @@ projeto, as alternativas consideradas, a opção escolhida, o motivo e o trade-o
 ## D13 — Event sourcing para o saldo de conta
 
 - **Alternativas consideradas:** manter `balance_cents` como coluna mutável em `accounts`,
-  atualizada via `UPDATE` a cada depósito/saque/transferência (abordagem original do projeto — ainda
-  descrita, sem essa evolução, em `docs/specs/`).
+  atualizada via `UPDATE` a cada depósito/saque/transferência.
 - **Escolha:** remover a coluna `balance_cents` de `accounts`; `transactions` passa a ser a única
   fonte de verdade sobre movimentações financeiras, e o saldo é sempre recalculado somando os
   eventos daquela conta (`AccountRepositorySqlAlchemy._compute_balance()`). Depositar, sacar e

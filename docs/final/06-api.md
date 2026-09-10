@@ -31,13 +31,10 @@
 **Como o código HTTP é decidido, na implementação real:** `app/adapters/inbound/api/exception_handlers.py`
 define um dicionário `_STATUS_BY_EXCEPTION: dict[type[Exception], int]` que associa cada exceção
 concreta de domínio (ver lista completa em `04-modelo-de-dominio.md`) a um código HTTP, e registra
-um handler individual por tipo via `app.add_exception_handler(...)`. Isso é uma pequena diferença em
-relação à descrição original do design (`docs/specs/04-api-spec.md`), que fala em um único handler
-"`@app.exception_handler(DomainError)`" — na prática são **N handlers específicos, um por
-subclasse**, não um único handler genérico na classe-base. O efeito observável é idêntico (cada
-exceção de domínio nunca tratada localmente vira uma resposta `{"detail": "..."}` com o código
-certo), então nenhum Controller precisa de `try/except` repetido — só a mecânica interna difere do
-texto do design original.
+um handler individual por tipo via `app.add_exception_handler(...)`. São **N handlers específicos,
+um por subclasse**, em vez de um único handler genérico na classe-base. Cada exceção de domínio não
+tratada localmente vira uma resposta `{"detail": "..."}` com o código certo, então nenhum
+Controller precisa de `try/except` repetido.
 
 ## Autenticação (`/api/auth`)
 

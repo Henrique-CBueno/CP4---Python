@@ -2,9 +2,7 @@
 
 Este conjunto de documentos descreve o sistema **como ele foi efetivamente implementado**,
 verificado diretamente contra o código-fonte deste repositório e contra o grafo de conhecimento
-gerado pelo Graphify sobre ele. Onde a implementação diverge do design original em
-`docs/specs/`, a diferença é apontada explicitamente em vez de omitida — ver, em especial,
-`03-arquitetura.md` e `07-fluxos-principais.md`.
+gerado pelo Graphify sobre ele.
 
 ## Índice
 

@@ -133,9 +133,7 @@ não na entidade em si:
 - no banco, uma `CheckConstraint("type IN ('CPF','EMAIL','PHONE','RANDOM')")` funciona como rede de
   segurança final.
 
-Essa é uma diferença pequena, mas real, em relação a `docs/specs/02-domain-model.md`, que descreve
-`type` como `PixKeyType (enum)` diretamente na entidade — na implementação, o enum existe só na
-camada de API, o domínio trabalha com `str`.
+O enum `PixKeyType` existe só na camada de API; o domínio trabalha com `str`.
 
 **Relacionamentos:** pertence a uma `Account`.
 
@@ -277,10 +275,8 @@ pix_transfer_service.transfer(source_account_id=10, pix_key_value="10-own-key", 
 ## Sobre dinheiro: por que não existe uma classe `Money`
 
 Não há `Money` como *value object* separado. Dinheiro é representado por `int` (centavos) em todas
-as camadas do backend — domínio, serviço e API. `docs/specs/02-domain-model.md` cogita um possível
-`app/domain/money.py` com pequenos helpers; **esse arquivo não existe na implementação atual** — não
-foi necessário, porque nenhuma conversão de centavos acontece em Python. A única formatação de
-centavos para reais (`1050` → `"R$ 10,50"`) do projeto inteiro é `formatCents()`, em
+as camadas do backend — domínio, serviço e API. Nenhuma conversão de centavos acontece em Python.
+A única formatação de centavos para reais (`1050` → `"R$ 10,50"`) do projeto inteiro é `formatCents()`, em
 `app/static/js/api.js`, no frontend (ver `08-frontend.md`). Ver `05-banco-de-dados.md` para a
 justificativa completa de por que dinheiro é sempre inteiro em centavos.
 

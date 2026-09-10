@@ -2,8 +2,7 @@
 
 ## Requisitos acadêmicos obrigatórios (enunciado do trabalho)
 
-Estes são os requisitos mínimos exigidos pelo enunciado do trabalho, extraídos de
-`docs/specs/01-requirements.md`:
+Estes são os requisitos mínimos exigidos pelo enunciado do trabalho:
 
 1. Utilizar **FastAPI** para desenvolver a API.
 2. Utilizar **SQLite** como banco de dados.

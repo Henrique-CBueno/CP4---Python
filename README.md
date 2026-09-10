@@ -10,9 +10,7 @@ processamento financeiro verdadeiro.
 Este README documenta tecnologias, arquitetura, modelo de domínio, banco de dados e as principais
 decisões técnicas do projeto. Para o detalhamento completo, veja
 [`docs/final/`](docs/final/) — documentação verificada diretamente contra o código-fonte, incluindo
-divergências explícitas em relação ao design original — e [`docs/specs/`](docs/specs/), o design
-original do projeto (requisitos, casos de uso, especificação da API, plano de testes e plano de
-implementação).
+as principais decisões técnicas e de implementação do projeto.
 
 ## Sumário
 
@@ -390,7 +388,6 @@ tests/
 
 docs/
   final/                          # documentação "como foi implementado", verificada contra o código
-  specs/                            # documentação de design original do projeto
 
 pyproject.toml                     # configuração do black e do ruff
 ```

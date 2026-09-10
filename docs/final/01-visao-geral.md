@@ -121,6 +121,4 @@ exemplos concretos de código (classes, métodos e arquivos reais) em `07-fluxos
 
 Este conjunto de documentos (`docs/final/`) descreve o sistema **como ele foi efetivamente
 implementado**, verificado contra o código-fonte e contra o grafo de conhecimento gerado pelo
-Graphify sobre este repositório. Onde a implementação diverge do design original em
-`docs/specs/`, a diferença é apontada explicitamente — nunca omitida. Veja o índice completo em
-[`README.md`](README.md).
+Graphify sobre este repositório. Veja o índice completo em [`README.md`](README.md).

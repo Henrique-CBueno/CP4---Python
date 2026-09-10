@@ -199,8 +199,7 @@ tests/
 ## Simplificações conscientes desta arquitetura
 
 Um projeto acadêmico deste porte ganha mais em clareza do que em pureza arquitetural. Duas
-simplificações estão documentadas deliberadamente desde o design original
-(`docs/specs/06-architecture.md`) e se confirmam no código:
+simplificações são documentadas deliberadamente e se confirmam no código:
 
 ### 1. `Transaction` é entidade de domínio
 
@@ -264,9 +263,7 @@ função de wiring.
 
 ## Atomicidade: como funciona de fato
 
-`docs/specs/06-architecture.md` ilustra a atomicidade com um `with session.begin():` explícito
-dentro do Service. **O código implementado usa um mecanismo diferente, mais simples**, e vale
-documentar o real em vez do ilustrativo:
+O código implementado usa um mecanismo simples para preservar a atomicidade:
 
 1. `get_db()` (`app/infrastructure/db.py`) abre uma única `Session` por requisição
    (`with SessionLocal() as session: yield session; session.commit()`).

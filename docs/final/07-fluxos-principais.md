@@ -65,9 +65,8 @@ Frontend → fetch() → Controller FastAPI → Service → Domínio → Reposit
    (`service.get(account_id)`) só para checar posse (`ensure_account_owner_or_admin`), depois chama
    `service.get_statement(account_id)`.
 4. **Service:** `AccountService.get_statement()` — reconfirma a existência da conta e delega ao
-   Repository de `Transaction`. **Não existe uma classe `StatementService` separada** —
-   diferentemente do que `docs/specs/06-architecture.md` lista na estrutura de diretórios, a lógica
-   de extrato vive dentro de `AccountService`. O arquivo de teste
+   Repository de `Transaction`. **Não existe uma classe `StatementService` separada**; a lógica de
+   extrato vive dentro de `AccountService`. O arquivo de teste
    `tests/service/test_statement_service.py` existe e é nomeado como se testasse um serviço
    dedicado, mas na prática exercita `AccountService`.
 5. **Port → Adapter:** `TransactionRepository.list_by_account()` →
