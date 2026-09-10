@@ -3,7 +3,7 @@ from __future__ import annotations
 from app.application.ports.account_repository import AccountRepository
 from app.application.ports.pix_key_repository import PixKeyRepository
 from app.application.ports.transaction_repository import TransactionRepository
-from app.domain import transaction_rules
+from app.domain import balance_rules, transaction_rules
 from app.domain.entities.transaction import Transaction
 from app.domain.exceptions import (
     AccountNotFoundError,
@@ -43,11 +43,7 @@ class PixTransferService:
         if source.id == destination.id:
             raise SameAccountTransferError(source.id)
 
-        source.withdraw(amount_cents)
-        destination.deposit(amount_cents)
-
-        self._account_repo.update(source)
-        self._account_repo.update(destination)
+        balance_rules.validate_withdraw(source.id, amount_cents, source.balance_cents)
 
         transaction_rules.validate_transaction_shape("PIX_TRANSFER", source.id, destination.id)
 

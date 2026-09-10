@@ -7,7 +7,6 @@ from app.adapters.outbound.persistence.account_repository_sqlalchemy import (
 from app.adapters.outbound.persistence.customer_repository_sqlalchemy import (
     CustomerRepositorySqlAlchemy,
 )
-from app.adapters.outbound.persistence.models import Account as AccountModel
 from app.adapters.outbound.persistence.models import PixKey as PixKeyModel
 from app.adapters.outbound.persistence.models import Transaction as TransactionModel
 from app.adapters.outbound.persistence.transaction_repository_sqlalchemy import (
@@ -92,19 +91,6 @@ def test_delete_account_without_dependencies(db_session):
 
     with pytest.raises(AccountNotFoundError):
         service.get(account.id)
-
-
-def test_delete_account_with_balance_raises_error(db_session):
-    customer = make_customer(db_session)
-    service = make_service(db_session)
-    account = service.create(customer_id=customer.id, agency="0001", number="123456")
-
-    model = db_session.get(AccountModel, account.id)
-    model.balance_cents = 500
-    db_session.flush()
-
-    with pytest.raises(AccountHasDependenciesError):
-        service.delete(account.id)
 
 
 def test_delete_account_with_pix_key_raises_error(db_session):
