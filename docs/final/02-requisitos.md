@@ -110,7 +110,6 @@ acréscimo deliberado:
 
 - OAuth, JWT em header, verificação de email, "esqueci minha senha".
 - CSRF, rate limiting e demais *hardenings* de autenticação de nível produção.
-- Integração real com o Banco Central, sistema Pix real ou QR Code Pix real.
 - Gateways de pagamento (Stripe, Mercado Pago etc.).
 - Event sourcing, CQRS, filas de mensageria, background workers.
 - Microserviços e transações distribuídas.

@@ -7,11 +7,6 @@ simula, de forma simplificada, um **banco digital**. A aplicação permite cadas
 contas, registrar chaves Pix simuladas, realizar depósitos, saques e transferências Pix internas, e
 consultar o saldo e o extrato de uma conta.
 
-**Não é um banco real.** Não há integração com o Banco Central, com o sistema Pix verdadeiro, com
-nenhum gateway de pagamento, nem qualquer processamento financeiro real. Toda a "transferência Pix"
-é uma simulação interna: debita uma conta e credita outra dentro do próprio banco de dados do
-projeto.
-
 ## Objetivo acadêmico
 
 O objetivo pedagógico central não é reproduzir um sistema bancário completo, mas demonstrar, de
@@ -50,7 +45,6 @@ Está dentro do escopo implementado:
 Está fora do escopo, deliberadamente (ver `10-decisoes-tecnicas.md` para a justificativa de cada
 item):
 
-- Integração real com o Banco Central, com o sistema Pix ou com qualquer gateway de pagamento.
 - OAuth/JWT, verificação de e-mail, recuperação de senha.
 - CQRS, event sourcing, filas de mensageria, microserviços, containers obrigatórios.
 - Frameworks de injeção de dependência (usa-se apenas `Depends()` do próprio FastAPI).

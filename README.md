@@ -4,9 +4,6 @@ Simulação acadêmica de um banco digital (clientes, contas, chaves Pix, depós
 transferências Pix internas), construída com FastAPI, SQLAlchemy e SQLite, com frontend em
 HTML/CSS/JavaScript consumindo a própria API.
 
-Não é um banco real: não há integração com o Banco Central, com o sistema Pix real ou com qualquer
-processamento financeiro verdadeiro.
-
 Este README documenta tecnologias, arquitetura, modelo de domínio, banco de dados e as principais
 decisões técnicas do projeto. Para o detalhamento completo, veja
 [`docs/final/`](docs/final/) — documentação verificada diretamente contra o código-fonte, incluindo
@@ -334,7 +331,6 @@ consideradas, motivo e trade-off de cada uma). Resumo:
 | D7 | Ports | `typing.Protocol` (não `abc.ABC`) | Tipagem estrutural — repositório de teste satisfaz a interface sem herdar de nada |
 | D8 | `Transaction` | Só modelo SQLAlchemy, sem entidade de domínio própria | É um registro *create-only*; entidade separada seria puro boilerplate |
 | D9 | Autenticação | Sessão via cookie assinado, sem JWT/OAuth | Suficiente pra distinguir "minha conta" de "conta de outro cliente" |
-| D10 | Pix real | Simulado inteiramente dentro do próprio banco | Integração real (DICT/Banco Central) fora do alcance de um trabalho acadêmico |
 | D11 | Injeção de dependência | Só `Depends()` do FastAPI, sem framework de DI | O problema real (montar Service com os Adapters certos) não justifica um container |
 | D12 | CQRS / microserviços | Nenhum dos dois | Sem modelo de leitura divergente do de escrita nem necessidade de escala/deploy independente |
 | D13 | Saldo de conta | *Event sourcing* — `transactions` como única fonte de verdade, saldo derivado | Elimina redundância entre estado (`balance_cents`) e histórico; ver "Banco de dados" acima |

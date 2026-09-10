@@ -136,19 +136,6 @@ projeto, as alternativas consideradas, a opção escolhida, o motivo e o trade-o
   refresh token, expiração configurável, nem revogação individual de sessão — fora do escopo
   proposital (ver `02-requisitos.md`, "Fora do escopo").
 
-## D10 — Sem integração real com o Pix / Banco Central
-
-- **Alternativas consideradas:** nenhuma — integração real nunca foi cogitada como viável para o
-  escopo do trabalho.
-- **Escolha:** "chave Pix" e "transferência Pix" são conceitos inteiramente simulados dentro do
-  próprio banco de dados do projeto.
-- **Motivo:** integração real exigiria credenciamento junto ao Banco Central (DICT), certificados,
-  ambiente de homologação — infraestrutura totalmente fora do alcance e do objetivo de um trabalho
-  acadêmico. O valor pedagógico está em modelar corretamente a *forma* da transferência (chave →
-  conta de destino, débito/crédito atômico), não em processá-la de verdade.
-- **Trade-off:** nenhum "Pix" cadastrado aqui funciona fora deste sistema — é uma simulação, e o
-  `README.md` e `01-visao-geral.md` deixam isso explícito para quem avaliar o projeto.
-
 ## D11 — Sem framework de injeção de dependência
 
 - **Alternativas consideradas:** `dependency-injector`, `punq`, container de DI customizado.
@@ -202,7 +189,7 @@ projeto, as alternativas consideradas, a opção escolhida, o motivo e o trade-o
 
 Cada decisão acima resolve um requisito real do projeto (ou o requisito explícito do enunciado, ou
 uma necessidade didática concreta, como distinguir "minha conta" de "conta de outro cliente"). Onde
-uma técnica mais sofisticada foi deliberadamente deixada de fora (D9 sem JWT, D10 sem Pix real, D12
-sem CQRS/microserviços), a ausência é uma escolha registrada, não uma lacuna — e onde uma técnica
+uma técnica mais sofisticada foi deliberadamente deixada de fora (D9 sem JWT e D12 sem
+CQRS/microserviços), a ausência é uma escolha registrada, não uma lacuna — e onde uma técnica
 mais sofisticada *foi* adotada de forma proposital e escopada (D13, event sourcing só para o saldo),
 isso também está registrado, com o trade-off explícito em vez de omitido.
