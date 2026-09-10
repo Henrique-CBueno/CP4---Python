@@ -24,7 +24,6 @@
       <div id="accounts-error" class="alert alert-error" hidden></div>
 
       <form id="account-form" class="card" data-admin-only>
-        <input type="hidden" id="account-editing-id" value="" />
         <label>
           Cliente
           <select name="customer_id" required></select>
@@ -34,6 +33,22 @@
         <label>Apelido <input type="text" name="label" /></label>
         <button type="submit">Cadastrar</button>
       </form>
+
+      <dialog id="account-edit-modal" class="modal">
+        <form id="account-edit-form" class="modal-content">
+          <div class="modal-header">
+            <h3>Editar conta</h3>
+            <button type="button" class="modal-close" aria-label="Fechar">×</button>
+          </div>
+          <input type="hidden" name="id" />
+          <label>Agência <input type="text" name="agency" required /></label>
+          <label>Apelido <input type="text" name="label" /></label>
+          <div class="modal-actions">
+            <button type="button" class="button-secondary" data-modal-cancel>Cancelar</button>
+            <button type="submit">Salvar alterações</button>
+          </div>
+        </form>
+      </dialog>
 
       <table class="table">
         <thead>
@@ -53,6 +68,6 @@
 
     <script src="/static/js/api.js"></script>
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/accounts.js"></script>
+    <script src="/static/js/accounts.js?v=modal-1"></script>
   </body>
 </html>
