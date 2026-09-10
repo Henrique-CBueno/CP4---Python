@@ -116,7 +116,7 @@ def deposit(
     account = service.get(account_id)
     ensure_account_owner_or_admin(current, account)
     transaction = service.deposit(account_id, body.amount_cents)
-    return TransactionRead.model_validate(transaction)
+    return TransactionRead.model_validate(transaction) # Transforma "dict" em "TransactionRead" para retornar o objeto correto no response_model
 
 
 @router.post(
